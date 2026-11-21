@@ -148,6 +148,28 @@ function createPlayerEngine(ctx) {
     db.persist();
   }
 
+  // 本人自动识别：已连接并登录客户端时，直接采用当前登录召唤师为「自己」，无需手动查询。
+  // 仅只读 current-summoner；未登录/未连接时回退到已保存的 selfPuuid/intelPuuid。
+  async function self() {
+    const s = lcu.getState();
+    let sum = s.summoner || null;
+    if (s.loggedIn && !sum) { try { sum = await lcu.getCurrentSummoner(); } catch { sum = null; } }
+    if (s.loggedIn && sum && sum.puuid) {
+      const player = {
+        puuid: sum.puuid, summonerId: sum.summonerId || null,
+        name: sum.gameName || sum.displayName || '本人', tagLine: sum.tagLine || null,
+        serverId: s.platformId || null, region: s.region || null,
+        profileIconId: sum.profileIconId || null, level: sum.level || null,
+        privacy: 'PUBLIC', source: 'lcu', fetchedAt: new Date().toISOString(), confidence: 0.95,
+      };
+      upsertPlayer(player);
+      if (!config.get('selfPuuid')) config.set('selfPuuid', player.puuid);
+      return { auto: true, puuid: player.puuid, player };
+    }
+    const saved = config.get('selfPuuid') || config.get('intelPuuid') || null;
+    return { auto: false, puuid: saved, player: null };
+  }
+
   function upsertPlayer(p) {
     db.run(`INSERT INTO players(puuid,summonerId,name,tagLine,serverId,region,profileIconId,level,privacy,source,fetchedAt,confidence,data)
       VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?)
@@ -438,8 +460,9 @@ function createPlayerEngine(ctx) {
     };
   }
 
-  // Resolve a champ-select cell (summonerId) into name + puuid + cached profile.
-  async function resolveCell(cell) {
+  // Resolve a champ-select cell (summonerId) into name + puuid + profile.
+  // refresh=true 时拉取该玩家真实历史（只读）再评级，供选人阶段判断队友/对手上等马/下等马；默认读缓存。
+  async function resolveCell(cell, opts = {}) {
     if (!cell) return null;
     const out = { championId: cell.championId, position: cell.assignedPosition, summonerId: cell.summonerId, isSelf: cell.isSelf };
     const s = lcu.getState();
@@ -450,13 +473,47 @@ function createPlayerEngine(ctx) {
           out.puuid = sum.puuid; out.name = sum.displayName || sum.gameName || sum.internalName;
           upsertPlayer({ puuid: sum.puuid, summonerId: sum.summonerId, name: out.name, serverId: s.platformId, region: s.region, profileIconId: sum.profileIconId, level: sum.summonerLevel, source: 'lcu', fetchedAt: new Date().toISOString(), confidence: 0.9 });
           db.persist();
+          let matches = cachedMatches(sum.puuid, 20);
+          if (opts.refresh) {
+            try { const hist = await fetchHistory(sum.puuid, { count: 20, serverId: s.platformId }); if (hist && hist.matches && hist.matches.length) matches = hist.matches; } catch {}
+          }
           const cached = db.get('SELECT * FROM players WHERE puuid=?', [sum.puuid]);
-          const matches = cachedMatches(sum.puuid, 20);
-          if (matches.length) { out.stats = computeStats(matches, sum.puuid); out.rating = rate(out.stats, cached && cached.rankTier ? { tier: cached.rankTier, division: cached.rankDivision } : null); }
+          if (matches.length) { out.stats = computeStats(matches, sum.puuid); out.rating = rate(out.stats, cached && cached.rankTier ? { tier: cached.rankTier, division: cached.rankDivision } : null); out.live = !!opts.refresh; }
         }
       } catch (e) { out.resolveError = String(e.message || e); }
     }
     return out;
+  }
+
+  // 单局经济曲线 + 技能加点：只读 SGP DETAILS（frames）。需已登录客户端；离线/无 DETAILS 时诚实返回 null。
+  async function matchTimeline(gameId, puuid) {
+    const s = lcu.getState();
+    if (!s.loggedIn) return { ok: false, error: '需要已登录客户端（经济曲线/加点来自 SGP DETAILS，离线不可用）。' };
+    let token = null;
+    try { token = await lcu.getEntitlementsToken(); } catch { return { ok: false, error: '无法获取 SGP 凭据。' }; }
+    if (!token) return { ok: false, error: '无法获取 SGP 凭据。' };
+    let raw = null;
+    try { raw = await sgp.getGameDetails({ token, platformId: s.platformId, tencent: s.tencent, gameId, customHost: config.get('sgpHostOverride') || null }); }
+    catch (e) { return { ok: false, error: String(e.message || e) }; }
+    const g = (raw && raw.raw && (raw.raw.json || raw.raw)) || (raw && (raw.json || raw)) || raw || {};
+    const frames = g.frames || [];
+    if (!frames.length) return { ok: false, error: '该对局无 DETAILS 帧数据（经济曲线不可用）。' };
+    const interval = g.frameInterval || 60000;
+    // 定位本人 participantId
+    const parts = g.participants || [];
+    const mine = parts.find(p => p.puuid === puuid) || parts[0] || {};
+    const pid = mine.participantId;
+    const goldSeries = [];
+    const skillOrder = [];
+    for (const f of frames) {
+      const pf = (f.participantFrames || {})[pid] || {};
+      const t = Math.round((f.timestamp || 0) / 60000);
+      if (pf.totalGold != null || pf.currentGold != null) goldSeries.push({ t, gold: pf.totalGold != null ? pf.totalGold : pf.currentGold });
+      for (const e of (f.events || [])) {
+        if (e.type === 'SKILL_LEVEL_UP' && (e.participantId === pid || e.creatorId === pid)) skillOrder.push({ t: Math.round((e.timestamp || 0) / 60000), slot: e.skillSlot, level: e.levelUpType });
+      }
+    }
+    return { ok: true, gameId, interval, goldSeries, skillOrder, participantId: pid, source: 'sgp-details' };
   }
 
   // 单局十人快速评级：仅读本地缓存（无网络），供对局详情表即时展示；深度侦察走 profile(refresh)。
@@ -499,7 +556,7 @@ function createPlayerEngine(ctx) {
   }
   function removeFocus(puuid) { db.run('DELETE FROM player_focus WHERE puuid=?', [puuid]); db.persist(); }
 
-  return { available, channels, search, confirmCandidate, searchHistory, deleteSearchHistory, clearSearchHistory, profile, fetchHistory, getMatchDetail, computeStats, rate, cachedMatches, scoutParticipants, resolveCell, recentPlayers, deleteRecent, clearRecent, favoritePlayers, toggleFavorite, focusList, setFocus, removeFocus, defaultRatingMode, modeLabel, RANK_CN, RANK_ORDER };
+  return { available, channels, self, search, confirmCandidate, searchHistory, deleteSearchHistory, clearSearchHistory, profile, fetchHistory, getMatchDetail, matchTimeline, computeStats, rate, cachedMatches, scoutParticipants, resolveCell, recentPlayers, deleteRecent, clearRecent, favoritePlayers, toggleFavorite, focusList, setFocus, removeFocus, defaultRatingMode, modeLabel, RANK_CN, RANK_ORDER };
 }
 
 module.exports = { createPlayerEngine, RANK_CN, RANK_ORDER };
