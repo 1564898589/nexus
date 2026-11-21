@@ -1,0 +1,134 @@
+<!doctype html>
+<html lang="zh-cn">
+  <head>
+    <meta charset="utf-8" />
+    <meta http-equiv="X-UA-Compatible" content="ie=edge,chrome=1" />
+    <meta name="ignore" content="all" />
+    <meta name="referrer" content="no-referrer-when-downgrade" />
+    <meta name="Copyright" content="Tencent" />
+    <script>window["ZMProjectConfig"] = {"project_name":"lolstrategy","env":"production","project_name_cn":"LOL Strategy","release_url":"https://lol.qq.com/lolstrategy/","ZMSERVICE":"https://mlol.qt.qq.com","aegisid":""};</script>
+    <script>window.PPTaskCenter={EventPool:{},WaiterPool:{},_searchTaskIndexFromPool:function(o,e,n){var r=-1,t=o[e];if(t&&t.length)for(var l=0,i=t.length;l<i;++l){var s=t[l];if(s&&s.owner===n){r=l;break}}return r},on:function(o,e,n){if(o&&e&&n)if("function"==typeof n){var r=this.EventPool[e]||(this.EventPool[e]=[]);-1===this._searchTaskIndexFromPool(this.EventPool,e,o)?r.push({owner:o,func:n}):console.warn("该对象已经注册过本事件监听",o,e,n)}else console.error("监听函数异常,请传入函数",o,e,n);else console.error("事件注册失败,请检查传参",o,e,n)},send:function(o,e){if(o){var n=this.EventPool[o];if(n&&n.length)for(var r,t=0;t<n.length;++t)(r=n[t])&&"function"==typeof r.func?r.func(e,o):(n.splice(t,1),--t)}else console.error("事件名称异常,请检查传参",o,e)},unbind:function(o,e){if(o&&e){var n=this.EventPool[e];if(n&&n.length){var r=this._searchTaskIndexFromPool(this.EventPool,e,o);-1!==r?n[r]=null:console.warn("释放事件失败,该对象没有注册过此事件",o,e)}else console.warn("释放事件失败,该对象没有注册过此事件",o,e)}else console.error("释放事件失败,请检查传参",o,e)},dispatch:function(o,e,n){o&&e&&n?"function"==typeof n?this.WaiterPool[e]?console.warn("该待询已经被注册过",o,e,n):this.WaiterPool[e]={owner:o,func:n}:console.error("处理待询函数异常,请传入函数",o,e,n):console.error("注册待询失败,请检查传参",o,e,n)},request:function(o,e){if(o){var n=this.WaiterPool[o];if(n&&n.func)return n.func(e)}else console.error("请求待询失败,请检查传参",o)},retire:function(o,e){if(o&&e){var n=this.WaiterPool[e];n&&n.owner?this.WaiterPool[e]=null:console.warn("释放待询失败,该对象没有提供过此待询",o,e)}else console.error("释放待询失败,请检查传参",o,e)}};</script>
+    <meta name="Description" content="101英雄联盟英雄榜提供召唤师峡谷、海克斯大乱斗、极地大乱斗与经典模式英雄排名，查看Tier、胜率、登场率、禁用率、符文天赋与装备构筑。" />
+    <meta name="Keywords" content="lol, 英雄联盟, 英雄联盟英雄榜, LOL胜率排行, 英雄强度榜, 极地大乱斗英雄榜, 大乱斗胜率, 乱斗强势英雄, 海克斯大乱斗英雄榜, 海斗英雄, 海斗胜率, LOL经典模式, 经典模式英雄榜, 符文, 装备" />
+    <title>英雄联盟英雄榜｜胜率与英雄排行 - 101数据站</title>
+    <script>window._ZmPageHash = "c05ddcfb50bf690efac310fb7bf5739a0eaea202"</script>
+    <!-- 避免官方 foot.js 插入 DOM 时在样式就绪前产生无样式的闪烁 (FOUC) -->
+    <style>
+      #afooter {
+        display: none;
+      }
+    </style>
+    <script type="module" crossorigin src="https://lol.qq.com/lolstrategy/assets/20261118/strategy-BKub8if5.js"></script>
+    <link rel="stylesheet" crossorigin href="https://lol.qq.com/lolstrategy/assets/20261118/strategy-N-4qsjrQ.css">
+  </head>
+
+  <body>
+    <div class="page-file-loading" hidden><style>body{margin:0;}@media (prefers-color-scheme: dark){html,body,.page-file-loading{background-color:#1a1a1aff !important;}}.page-file-loading{width:100vw;height:100vh;position:absolute;left:0;top:62px;}.page-load-tip{width:100%;height:100%;overflow:hidden;}.page-load-tip-anim{width:100%;height:66px;margin-top:88px;display:flex;align-items:center;justify-content:center;transform:skewX(-16deg);}.page-load-tip-anim-i{width:12px;height:24px;background-color:#efefef;margin:0 5px;animation:keyframes-page-load-tip-anim-i .6s linear infinite alternate;opacity:0;}.page-load-tip-anim-i.--i1{animation-delay:-.6s;}.page-load-tip-anim-i.--i2{animation-delay:-.4s;}.page-load-tip-anim-i.--i3{animation-delay:-.2s;}@keyframes keyframes-page-load-tip-anim-i{0%{opacity:.1;transform:scale(1);}100%{opacity:1;transform:scale(1.1);}}.page-load-tip .btn-flash{display:block;margin:30px auto 0 auto;border:1px #a0acb5 solid;width:80px;height:auto;line-height:21px;font-size:12px;text-align:center;border-radius:2px;color:#a0acb5;text-decoration:none;animation:opacityshow .3s 2s forwards;opacity:0;}@keyframes opacityshow{0%{opacity:0;}100%{opacity:1;}}.page-load-tip-err{width:100%;box-sizing:border-box;padding:0 16px;margin-top:20px;font-size:9px;color:red;text-align:center;}</style><div class="page-load-tip" onclick="window.location.reload()"><div class="page-load-tip-anim"><i class="page-load-tip-anim-i --i1"></i><i class="page-load-tip-anim-i --i2"></i><i class="page-load-tip-anim-i --i3"></i></div><a class="btn-flash">再刷新一下</a><p class="page-load-tip-err"></p></div></div>
+    <script id="page_load_script">(function(){var reportPageLoadAegisRetry=0;var reportPageLoadAegis=function(type,message){if(!window.Aegis){if(reportPageLoadAegisRetry++>50){console.warn('[pageLoading] window.Aegis 不可用, aegis ability 是否已开启?');return}setTimeout(function(){reportPageLoadAegis(type,message)},300)}else{_reportPageLoadAegis(type,message)}};var pageLoadingAegis;var _reportPageLoadAegis=function(type,message){if(!pageLoadingAegis){pageLoadingAegis=new Aegis({id:"r5GlYTl7zppG5jmJyE",reportApiSpeed:false,reportAssetSpeed:false,spa:false})}pageLoadingAegis.report({msg:'页面加载监控异常上报',level:'4',ext1:JSON.stringify(document.cookie),ext2:type,ext3:message,trace:'trace'})};var recordLoadingFunc=function(error){window.load_error_record||(window.load_error_record=error);reportPageLoadAegis('errorrecord','记录报错'+error.message+'_'+error.filename)};window.addEventListener('error',recordLoadingFunc);var loadCheckStartTime=Date.now();var showTimer;var timeoutTimer;var pageLoadResolved=false;function removePageLoading(){window.removeEventListener('error',recordLoadingFunc);clearTimeout(showTimer);clearTimeout(timeoutTimer);if(window.load_error_record){reportPageLoadAegis('pageerr','文档解析成功,但遭遇错误'+window.load_error_record.message+'_'+window.load_error_record.filename)}var loadDom=document.querySelector('.page-file-loading');var loadScript=document.querySelector('#page_load_script');loadDom&&loadDom.remove();loadScript&&loadScript.remove()}function showPageLoading(){if(pageLoadResolved)return;var dom=document.querySelector('.page-file-loading');if(!dom)return;dom.removeAttribute('hidden');timeoutTimer=setTimeout(function(){if(window.load_error_record){reportPageLoadAegis('pagefail','文档解析失败'+window.load_error_record.message+'_'+window.load_error_record.filename)}else{reportPageLoadAegis('pagetimeout','文档解析超时')}var tipPrefix='非常抱歉，加载异常，您可尝试点击屏幕刷新一下</br></br>';if(window.load_error_record&&window.load_error_record.error){document.querySelector('.page-load-tip-err').innerHTML=tipPrefix+window.load_error_record.error.stack}else{document.querySelector('.page-load-tip-err').innerHTML=tipPrefix+'network timeout'}},12000)}showTimer=setTimeout(showPageLoading,1200);window.clearLoadFileCheck=function(){if(pageLoadResolved)return;pageLoadResolved=true;console.log('清理白屏恢复定时,文档解析耗时'+(Date.now()-loadCheckStartTime)/1000+'s');removePageLoading()}})();</script>
+
+    <div class="g-app"></div>
+    <!-- 腾讯互娱通用页脚组件 (foot.js 依赖 document.body) -->
+    <script src="//game.gtimg.cn/images/js/2018foot/foot.js" charset="gbk"></script>
+    <script>var currentHash=window._ZmPageHash;var runCheck=function(){var localkey=window.location.href.split('?')[0];var lastFlashTime=localStorage.getItem(localkey);var nowtime=Date.now();if(lastFlashTime&&nowtime-lastFlashTime<300000){return;}fetch("./version.json"+'?ts='+nowtime).then(function(rs){return rs.json();}).then(function(rs){var serviceHash=rs.hash;if(!serviceHash)return;currentHash||(currentHash=serviceHash);if(serviceHash!==currentHash){window.aegis&&window.aegis.infoAll("首页主动刷新");localStorage.setItem(localkey,nowtime);setTimeout(function(){var pagehref=window.location.href;if(pagehref.indexOf('?')===-1){pagehref+='?ts='+Date.now();}else if(pagehref.indexOf('ts=')===-1){pagehref+='&ts='+Date.now();}else{pagehref=pagehref.replace('ts=','ts=1');}window.location.href=pagehref;},1000);}}).catch(function(){});};if(window.fetch){setTimeout(runCheck,3000);setInterval(runCheck,60000);}</script>
+    <script>window.loadAegisOver = function () {
+  var aegisConfig = {"id":"r5GlYTl7zppG5jmJyE","reportApiSpeed":false,"reportAssetSpeed":false,"spa":true,"ext2":"lolstrategy"};
+  var projectConfig = window.ZMProjectConfig;
+  var projectName = projectConfig && typeof projectConfig.project_name === 'string' ? projectConfig.project_name.trim() : '';
+  if (projectName) {
+    aegisConfig.ext2 = projectName;
+  }
+  var cookieMap = {};
+  var cookiePairs = document.cookie ? document.cookie.split(';') : [];
+  for (var i = 0; i < cookiePairs.length; i++) {
+    var pair = cookiePairs[i];
+    var eq = pair.indexOf('=');
+    if (eq > 0) cookieMap[pair.slice(0, eq).trim()] = pair.slice(eq + 1).trim();
+  }
+  var openid = cookieMap.openid || '';
+  var uin = (cookieMap.acctype || '').toLowerCase() === 'wx' ? openid : (cookieMap.uin || openid);
+  if (uin) aegisConfig.uin = uin;
+  // 掌盟 UA：lolapp/12.8.2.2994 → version 取 12.8.2；不传则回退成 SDK 版本号
+  var zmVersionMatch = (navigator.userAgent || '').match(/lolapp\/(\d+(?:\.\d+){0,2})(?:\.(\d{4,}))?/i);
+  if (zmVersionMatch && zmVersionMatch[1]) aegisConfig.version = zmVersionMatch[1];
+  aegisConfig.beforeRequest = function (data) {
+    try {
+      if (data.logs && data.logs.msg && (data.logs.msg.indexOf('Script error.(:0:0)') > -1 || data.logs.msg.indexOf('@ (:0:0)') > -1)) {
+        return false;
+      }
+      return data;
+    } catch (error) {
+      return data;
+    }
+  };
+  
+  window.aegis = new Aegis(aegisConfig);
+  console.log('[page-shell] aegis initialized with id:', aegisConfig.id, 'ext2:', aegisConfig.ext2, 'uin:', aegisConfig.uin || '', 'version:', aegisConfig.version || '');
+  window.loadAegisOver = null;
+  window.PPTaskCenter && window.PPTaskCenter.send('PageAegisReady');
+};</script>
+    <script defer src="https://tam.cdn-go.cn/aegis-sdk/latest/aegis.min.js?max_age=86400" onload="loadAegisOver()"></script>
+    <script>window.setSite = {"siteType":"lolstrategy","pageType":"strategy","pageName":"英雄联盟英雄榜｜胜率与英雄排行 - 101数据站","project":"other","osact":"m"};
+if (!window.setSite.siteType || !window.setSite.pageType || String(window.setSite.pageType).indexOf('example') !== -1) {
+  console.error('请填写zm.project.config project_name project_name_cn 配置后, 删除此警告');
+}
+
+// 灯塔实例引用
+window._beaconInstance = null;
+
+window.loadBeaconOver = function() {
+  window.loadBeaconOver = null;
+
+  // 从 setSite 构建 commonParams
+  var p = {
+    report_projectname: window.setSite.siteType,
+    report_projecttype: window.setSite.siteType,
+    report_pagename: window.setSite.pageName,
+    report_pagetype: window.setSite.pageType
+  };
+
+  // 从 Cookie 提取用户信息，注入到 commonParams
+  var cookieMap = {};
+  if (document.cookie) {
+    document.cookie.split(';').forEach(function(c) {
+      var kv = c.trim().split('=');
+      if (kv.length === 2) cookieMap[kv[0]] = kv[1];
+    });
+  }
+  ['userId','uin','tid','accountType','clientType'].forEach(function(k) {
+    if (cookieMap[k]) p['report_' + k] = cookieMap[k];
+  });
+
+  // 初始化 AutoTrackBeacon（自动 PV + 自动元素曝光 at_imp）
+  window._beaconInstance = new window.AutoTrackBeacon({
+    report: {
+      appkey: '0AND0GZQH44TDFUA',
+      commonParams: p,
+      autoReportEvents: ['at_imp']
+    },
+    inspector: {
+      getActivePlugins: function() {
+        return /\?/.test(location.search) ? ['heatmap','detector','pageAccess'] : [];
+      }
+    }
+  });
+
+  // PTT 兼容：注册 PTTSendClick 桥接
+  window.PTTSendClick = function(statType, eventName, desc) {
+    if (!window._beaconInstance) return;
+    window._beaconInstance.dtReport(
+      window.setSite.siteType + '_' + eventName,
+      desc ? { report_desc_1: desc } : {},
+      'onUserAction'
+    );
+  };
+
+  // 兼容旧版 pgvMain
+  if (typeof window.pgvMain === 'function') window.pgvMain();
+  else window.pgvMain = function(){};
+
+  // 通知 PPTaskCenter：灯塔已就绪
+  window.PPTaskCenter && window.PPTaskCenter.send('PTTReady');
+};</script>
+    <script defer src="https://beacon.cdn.qq.com/auto_tracker/js/autotracker-beacon-oa-4.0.2.min.js" onload="loadBeaconOver()"></script>
+  </body>
+</html>

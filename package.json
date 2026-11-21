@@ -1,0 +1,52 @@
+{
+  "name": "nexus-lol-tactical",
+  "version": "2.0.3",
+  "description": "NEXUS - League of Legends Tactical Intelligence Terminal (Windows desktop)",
+  "main": "electron/main.js",
+  "author": "竖 <1564898589@qq.com>",
+  "license": "MIT",
+  "private": true,
+  "scripts": {
+    "start": "electron .",
+    "fetch": "node tools/fetch-data.mjs",
+    "validate": "node tools/validate.mjs",
+    "dist": "electron-builder --win"
+  },
+  "devDependencies": {
+    "electron": "^45.0.0",
+    "electron-builder": "^25.1.8"
+  },
+  "dependencies": {
+    "@fontsource/chakra-petch": "^5.3.0",
+    "@fontsource/rajdhani": "^5.3.0",
+    "dompurify": "^3.4.18",
+    "marked": "^18.2.1",
+    "sql.js": "^1.16.0"
+  },
+  "build": {
+    "appId": "com.nexus.lol.tactical",
+    "productName": "NEXUS",
+    "directories": {
+      "output": "release"
+    },
+    "files": [
+      "electron/**/*",
+      "renderer/**/*",
+      "data/seed/**/*",
+      "package.json"
+    ],
+    "win": {
+      "target": [
+        "nsis"
+      ],
+      "signAndEditExecutable": false,
+      "forceCodeSigning": false
+    },
+    "nsis": {
+      "oneClick": false,
+      "allowToChangeInstallationDirectory": true,
+      "createDesktopShortcut": true,
+      "shortcutName": "NEXUS"
+    }
+  }
+}

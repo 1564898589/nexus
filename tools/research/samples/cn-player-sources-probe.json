@@ -1,0 +1,56 @@
+[
+  {
+    "label": "101网关对照(已知可用)",
+    "url": "https://mlol.qt.qq.com/go/battle_info/odp_proxy/lol_101strategy_ranklist?itier=26&lane=MIDDLE&version_id=16.23",
+    "status": 404,
+    "location": null,
+    "snippet": "404 page not found"
+  },
+  {
+    "label": "WeGame主站",
+    "url": "https://www.wegame.com.cn/",
+    "status": 302,
+    "location": "https://www.wegame.com.cn/home/",
+    "snippet": "<html> <head><title>302 Found</title></head> <body> <center><h1>302 Found</h1></center> <hr><center>nginx</center> </body> </html> "
+  },
+  {
+    "label": "WeGame候选API-角色搜索",
+    "url": "https://www.wegame.com.cn/api/v1/lol/role/search?keyword=test",
+    "status": 200,
+    "location": null,
+    "snippet": "{\"result\":{\"error_message\":\"\",\"error_code\":8000102}} "
+  },
+  {
+    "label": "WeGame候选API-玩家信息",
+    "url": "https://www.wegame.com.cn/api/v1/lol/player/info?area=1&name=test",
+    "status": 200,
+    "location": null,
+    "snippet": "{\"result\":{\"error_code\":8000102,\"error_message\":\"\"}} "
+  },
+  {
+    "label": "SGP候选HN1-red",
+    "url": "https://hn1-red.lol.sgp.pvp.net/match-history-query/v1/products/lol/player/00000000-0000-0000-0000-000000000000/SUMMARY?startIndex=0&count=1",
+    "status": "ERROR",
+    "error": "ENOTFOUND"
+  },
+  {
+    "label": "SGP候选sgp-hn1.qq",
+    "url": "https://sgp-hn1.lol.qq.com/match-history-query/v1/products/lol/player/00000000-0000-0000-0000-000000000000/SUMMARY?startIndex=0&count=1",
+    "status": "ERROR",
+    "error": "ENOTFOUND"
+  },
+  {
+    "label": "mlol候选-召唤师搜索",
+    "url": "https://mlol.qt.qq.com/go/lol/summoner/search?keyword=test",
+    "status": 404,
+    "location": null,
+    "snippet": "<html> <head><title>404 Not Found</title></head> <body> <center><h1>404 Not Found</h1></center> <hr><center>nginx</center> </body> </html> <!-- a padding to disable MSIE and Chrome friendly error page --> <!-- a padding to disable MSIE and Chrome friendly error page --> <!-- a padding to disable MSIE and Chrome friendly error page --> <!-- a padding to disable MSIE and Chrome friendly error page --> <!-- a padding to disable MSIE and Chrome friendly error page --> <!-- a padding to disable MSIE and Chrome friendly error page --> "
+  },
+  {
+    "label": "lol.qq.com战绩H5候选",
+    "url": "https://lol.qq.com/act/a20210712record/",
+    "status": 404,
+    "location": null,
+    "snippet": "<!doctype html> <html> <head> <meta charset=\"gbk\"> <meta name=\"description\" content=\"����ʵ�ҳ���Ҳ������ˣ��������ǿ���һ��Ѱ��ʧ�ٱ���\" /> <meta name=\"description\" content=\"����404ҳ��������Ѷ��˾Ա��־Ը����������Ļ�����������\" /> <meta name=\"description\" content=\"��Ѷ־Ը������Ѷ��˾�ڲ�Ա��Ϊ��Ӧ��˾�����������𾴵Ļ�������ҵ���ĺ��٣��Է���֯��������Ѷ־Ը��Э�ᡣ2012�������Ѷ־Ը�߼����ֻᣬ��չ404����ƻ������ϰ���Ʒ�ƶ��ȣ������Ѷ��Ʒ������ƽ̨����չ��������\" /> <link rel=\"dns-prefetch\" href=\"//game.gtimg.cn\"> <link rel=\"dns-prefetch\" href=\"//ossweb-img.qq.com\"> <link rel=\"stylesheet\" type=\"text/css\" href=\"//ossweb-img"
+  }
+]

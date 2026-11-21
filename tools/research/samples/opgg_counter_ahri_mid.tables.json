@@ -1,0 +1,357 @@
+[
+  {
+    "headings": [],
+    "arr": [
+      {
+        "play": 300,
+        "win": 164,
+        "win_rate": 54.67,
+        "champion": {
+          "image_url": "https://opgg-static.akamaized.net/meta/images/lol/16.23.1/champion/Sylas.png",
+          "name": "Sylas",
+          "key": "sylas"
+        }
+      },
+      {
+        "play": 205,
+        "win": 107,
+        "win_rate": 52.2,
+        "champion": {
+          "image_url": "https://opgg-static.akamaized.net/meta/images/lol/16.23.1/champion/TwistedFate.png",
+          "name": "Twisted Fate",
+          "key": "twistedfate"
+        }
+      },
+      {
+        "play": 185,
+        "win": 103,
+        "win_rate": 55.68,
+        "champion": {
+          "image_url": "https://opgg-static.akamaized.net/meta/images/lol/16.23.1/champion/Viktor.png",
+          "name": "Viktor",
+          "key": "viktor"
+        }
+      },
+      {
+        "play": 151,
+        "win": 89,
+        "win_rate": 58.94,
+        "champion": {
+          "image_url": "https://opgg-static.akamaized.net/meta/images/lol/16.23.1/champion/Orianna.png",
+          "name": "Orianna",
+          "key": "orianna"
+        }
+      },
+      {
+        "play": 150,
+        "win": 85,
+        "win_rate": 56.67,
+        "champion": {
+          "image_url": "https://opgg-static.akamaized.net/meta/images/lol/16.23.1/champion/Akali.png",
+          "name": "Akali",
+          "key": "akali"
+        }
+      },
+      {
+        "play": 138,
+        "win": 84,
+        "win_rate": 60.87,
+        "champion": {
+          "image_url": "https://opgg-static.akamaized.net/meta/images/lol/16.23.1/champion/Yone.png",
+          "name": "Yone",
+          "key": "yone"
+        }
+      },
+      {
+        "play": 127,
+        "win": 67,
+        "win_rate": 52.76,
+        "champion": {
+          "image_url": "https://opgg-static.akamaized.net/meta/images/lol/16.23.1/champion/Leblanc.png",
+          "name": "LeBlanc",
+          "key": "leblanc"
+        }
+      },
+      {
+        "play": 123,
+        "win": 58,
+        "win_rate": 47.15,
+        "champion": {
+          "image_url": "https://opgg-static.akamaized.net/meta/images/lol/16.23.1/champion/Zed.png",
+          "name": "Zed",
+          "key": "zed"
+        }
+      },
+      {
+        "play": 122,
+        "win": 74,
+        "win_rate": 60.66,
+        "champion": {
+          "image_url": "https://opgg-static.akamaized.net/meta/images/lol/16.23.1/champion/Syndra.png",
+          "name": "Syndra",
+          "key": "syndra"
+        }
+      },
+      {
+        "play": 103,
+        "win": 61,
+        "win_rate": 59.22,
+        "champion": {
+          "image_url": "https://opgg-static.akamaized.net/meta/images/lol/16.23.1/champion/Galio.png",
+          "name": "Galio",
+          "key": "galio"
+        }
+      },
+      {
+        "play": 97,
+        "win": 47,
+        "win_rate": 48.45,
+        "champion": {
+          "image_url": "https://opgg-static.akamaized.net/meta/images/lol/16.23.1/champion/Lissandra.png",
+          "name": "Lissandra",
+          "key": "lissandra"
+        }
+      },
+      {
+        "play": 84,
+        "win": 43,
+        "win_rate": 51.19,
+        "champion": {
+          "image_url": "https://opgg-static.akamaized.net/meta/images/lol/16.23.1/champion/Yasuo.png",
+          "name": "Yasuo",
+          "key": "yasuo"
+        }
+      },
+      {
+        "play": 83,
+        "win": 42,
+        "win_rate": 50.6,
+        "champion": {
+          "image_url": "https://opgg-static.akamaized.net/meta/images/lol/16.23.1/champion/Locke.png",
+          "name": "Locke",
+          "key": "locke"
+        }
+      },
+      {
+        "play": 79,
+        "win": 44,
+        "win_rate": 55.7,
+        "champion": {
+          "image_url": "https://opgg-static.akamaized.net/meta/images/lol/16.23.1/champion/Azir.png",
+          "name": "Azir",
+          "key": "azir"
+        }
+      },
+      {
+        "play": 70,
+        "win": 33,
+        "win_rate": 47.14,
+        "champion": {
+          "image_url": "https://opgg-static.akamaized.net/meta/images/lol/16.23.1/champion/Xerath.png",
+          "name": "Xerath",
+          "key": "xerath"
+        }
+      },
+      {
+        "play": 69,
+        "win": 28,
+        "win_rate": 40.58,
+        "champion": {
+          "image_url": "https://opgg-static.akamaized.net/meta/images/lol/16.23.1/champion/Katarina.png",
+          "name": "Katarina",
+          "key": "katarina"
+        }
+      },
+      {
+        "play": 67,
+        "win": 35,
+        "win_rate": 52.24,
+        "champion": {
+          "image_url": "https://opgg-static.akamaized.net/meta/images/lol/16.23.1/champion/Taliyah.png",
+          "name": "Taliyah",
+          "key": "taliyah"
+        }
+      },
+      {
+        "play": 65,
+        "win": 23,
+        "win_rate": 35.38,
+        "champion": {
+          "image_url": "https://opgg-static.akamaized.net/meta/images/lol/16.23.1/champion/Zoe.png",
+          "name": "Zoe",
+          "key": "zoe"
+        }
+      },
+      {
+        "play": 64,
+        "win": 33,
+        "win_rate": 51.56,
+        "champion": {
+          "image_url": "https://opgg-static.akamaized.net/meta/images/lol/16.23.1/champion/Hwei.png",
+          "name": "Hwei",
+          "key": "hwei"
+        }
+      },
+      {
+        "play": 53,
+        "win": 33,
+        "win_rate": 62.26,
+        "champion": {
+          "image_url": "https://opgg-static.akamaized.net/meta/images/lol/16.23.1/champion/Talon.png",
+          "name": "Talon",
+          "key": "talon"
+        }
+      },
+      {
+        "play": 53,
+        "win": 22,
+        "win_rate": 41.51,
+        "champion": {
+          "image_url": "https://opgg-static.akamaized.net/meta/images/lol/16.23.1/champion/Diana.png",
+          "name": "Diana",
+          "key": "diana"
+        }
+      },
+      {
+        "play": 52,
+        "win": 26,
+        "win_rate": 50,
+        "champion": {
+          "image_url": "https://opgg-static.akamaized.net/meta/images/lol/16.23.1/champion/Annie.png",
+          "name": "Annie",
+          "key": "annie"
+        }
+      },
+      {
+        "play": 52,
+        "win": 26,
+        "win_rate": 50,
+        "champion": {
+          "image_url": "https://opgg-static.akamaized.net/meta/images/lol/16.23.1/champion/Vex.png",
+          "name": "Vex",
+          "key": "vex"
+        }
+      },
+      {
+        "play": 50,
+        "win": 25,
+        "win_rate": 50,
+        "champion": {
+          "image_url": "https://opgg-static.akamaized.net/meta/images/lol/16.23.1/champion/Vladimir.png",
+          "name": "Vladimir",
+          "key": "vladimir"
+        }
+      },
+      {
+        "play": 50,
+        "win": 22,
+        "win_rate": 44,
+        "champion": {
+          "image_url": "https://opgg-static.akamaized.net/meta/images/lol/16.23.1/champion/Fizz.png",
+          "name": "Fizz",
+          "key": "fizz"
+        }
+      },
+      {
+        "play": 50,
+        "win": 24,
+        "win_rate": 48,
+        "champion": {
+          "image_url": "https://opgg-static.akamaized.net/meta/images/lol/16.23.1/champion/Aurora.png",
+          "name": "Aurora",
+          "key": "aurora"
+        }
+      },
+      {
+        "play": 47,
+        "win": 29,
+        "win_rate": 61.7,
+        "champion": {
+          "image_url": "https://opgg-static.akamaized.net/meta/images/lol/16.23.1/champion/Ekko.png",
+          "name": "Ekko",
+          "key": "ekko"
+        }
+      },
+      {
+        "play": 45,
+        "win": 25,
+        "win_rate": 55.56,
+        "champion": {
+          "image_url": "https://opgg-static.akamaized.net/meta/images/lol/16.23.1/champion/Irelia.png",
+          "name": "Irelia",
+          "key": "irelia"
+        }
+      },
+      {
+        "play": 44,
+        "win": 28,
+        "win_rate": 63.64,
+        "champion": {
+          "image_url": "https://opgg-static.akamaized.net/meta/images/lol/16.23.1/champion/Kassadin.png",
+          "name": "Kassadin",
+          "key": "kassadin"
+        }
+      },
+      {
+        "play": 42,
+        "win": 21,
+        "win_rate": 50,
+        "champion": {
+          "image_url": "https://opgg-static.akamaized.net/meta/images/lol/16.23.1/champion/Lux.png",
+          "name": "Lux",
+          "key": "lux"
+        }
+      },
+      {
+        "play": 37,
+        "win": 22,
+        "win_rate": 59.46,
+        "champion": {
+          "image_url": "https://opgg-static.akamaized.net/meta/images/lol/16.23.1/champion/Malzahar.png",
+          "name": "Malzahar",
+          "key": "malzahar"
+        }
+      },
+      {
+        "play": 34,
+        "win": 18,
+        "win_rate": 52.94,
+        "champion": {
+          "image_url": "https://opgg-static.akamaized.net/meta/images/lol/16.23.1/champion/Ryze.png",
+          "name": "Ryze",
+          "key": "ryze"
+        }
+      },
+      {
+        "play": 33,
+        "win": 19,
+        "win_rate": 57.58,
+        "champion": {
+          "image_url": "https://opgg-static.akamaized.net/meta/images/lol/16.23.1/champion/Anivia.png",
+          "name": "Anivia",
+          "key": "anivia"
+        }
+      },
+      {
+        "play": 33,
+        "win": 17,
+        "win_rate": 51.52,
+        "champion": {
+          "image_url": "https://opgg-static.akamaized.net/meta/images/lol/16.23.1/champion/Qiyana.png",
+          "name": "Qiyana",
+          "key": "qiyana"
+        }
+      },
+      {
+        "play": 32,
+        "win": 16,
+        "win_rate": 50,
+        "champion": {
+          "image_url": "https://opgg-static.akamaized.net/meta/images/lol/16.23.1/champion/Veigar.png",
+          "name": "Veigar",
+          "key": "veigar"
+        }
+      }
+    ]
+  }
+]

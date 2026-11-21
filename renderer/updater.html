@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; style-src 'self' 'unsafe-inline'; script-src 'self'; font-src 'self';" />
+  <title>NEXUS 更新</title>
+  <link rel="stylesheet" href="css/nexus.css" />
+  <style>
+    body { overflow: hidden; }
+    #upd { height: 100vh; display: flex; flex-direction: column; padding: 22px 26px; -webkit-app-region: drag; }
+    .u-title { font-family: var(--font-display); font-weight: 700; letter-spacing: 3px; color: var(--gold-bright); font-size: 15px; }
+    .u-sub { color: var(--text-3); font-size: 11px; letter-spacing: 1px; margin-top: 2px; }
+    .u-stage { margin-top: 26px; font-size: 13px; color: var(--text); line-height: 1.7; min-height: 44px; }
+    .u-bar { margin-top: 14px; height: 6px; border-radius: 3px; background: var(--panel-3); overflow: hidden; }
+    .u-fill { height: 100%; width: 0%; background: linear-gradient(90deg, var(--teal), var(--gold)); transition: width .3s; }
+    .u-pct { margin-top: 8px; font-family: var(--font-display); color: var(--text-3); font-size: 11px; text-align: right; }
+    .u-note { margin-top: auto; color: var(--text-3); font-size: 11px; line-height: 1.6; }
+    .u-ok { color: var(--green); } .u-bad { color: var(--red); } .u-warn { color: var(--gold); }
+  </style>
+</head>
+<body>
+  <div id="upd">
+    <div class="u-title">NEXUS UPDATE</div>
+    <div class="u-sub">智能版本管理 · 安全升级</div>
+    <div class="u-stage" id="u-stage">准备中…</div>
+    <div class="u-bar"><div class="u-fill" id="u-fill"></div></div>
+    <div class="u-pct" id="u-pct">0%</div>
+    <div class="u-note">升级过程不会删除你的数据库、配置、英雄池与对局记录。<br/>若升级失败，将自动恢复旧版本。</div>
+  </div>
+  <script src="js/updater-window.js"></script>
+</body>
+</html>

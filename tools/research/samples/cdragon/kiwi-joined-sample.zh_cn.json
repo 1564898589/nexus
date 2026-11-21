@@ -1,0 +1,71 @@
+[
+ {
+  "id": 1205,
+  "nameId": "ARAM_ADAPt",
+  "name": "物理转魔法",
+  "rarity": "kSilver",
+  "icon": "/lol-game-data/assets/ASSETS/UX/Cherry/Augments/Icons/ADAPt_small.png",
+  "strings": [
+   {
+    "key": "kiwi_aram_adapt_name",
+    "text": "物理转魔法"
+   }
+  ]
+ },
+ {
+  "id": 1141,
+  "nameId": "ARAM_AllForYou",
+  "name": "全心为你",
+  "rarity": "kGold",
+  "icon": "/lol-game-data/assets/ASSETS/UX/Cherry/Augments/Icons/AllForYou_small.png",
+  "strings": [
+   {
+    "key": "kiwi_aram_allforyou_name",
+    "text": "全心为你"
+   }
+  ]
+ },
+ {
+  "id": 1002,
+  "nameId": "ARAM_ApexInventor",
+  "name": "尖端发明家",
+  "rarity": "kGold",
+  "icon": "/lol-game-data/assets/ASSETS/UX/Cherry/Augments/Icons/ApexInventor_small.png",
+  "strings": [
+   {
+    "key": "kiwi_aram_apexinventor_name",
+    "text": "尖端发明家"
+   }
+  ]
+ },
+ {
+  "id": 2087,
+  "nameId": "ARAM_Archmage",
+  "name": "大法师",
+  "rarity": "kPrismatic",
+  "icon": "/lol-game-data/assets/ASSETS/UX/Cherry/Augments/Icons/Eureka_small.png",
+  "strings": [
+   {
+    "key": "kiwi_archmage_summary",
+    "text": "施放一个技能会返还另一个随机技能的花费，数额相当于@RefundPercent*100@%原技能冷却时间。"
+   },
+   {
+    "key": "kiwi_aram_archmage",
+    "text": "大法师"
+   }
+  ]
+ },
+ {
+  "id": 1004,
+  "nameId": "ARAM_BacktoBasics",
+  "name": "回归基本功",
+  "rarity": "kPrismatic",
+  "icon": "/lol-game-data/assets/ASSETS/UX/Cherry/Augments/Icons/BackToBasics_small.png",
+  "strings": [
+   {
+    "key": "kiwi_aram_backtobasics_name",
+    "text": "回归基本功"
+   }
+  ]
+ }
+]

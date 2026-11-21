@@ -1,0 +1,56 @@
+# NEXUS — 未来开源用 .gitignore（源码/文档/工具入库，产物与隐私排除）
+
+# 依赖与构建产物
+node_modules/
+dist/
+out/
+release/*.exe
+release/*.blockmap
+release/*.pdb
+release/win-unpacked/
+release/channel/
+release/history/
+release/upd-test/
+release/resume-test/
+release/empty-channel-test/
+release/test-channel/
+release/sigtest.exe
+release/fixture-*.exe
+release/builder-debug.yml
+release/*.pfx
+release/*.pem
+
+# 发布留档（含本机路径，开源前按需单独整理）
+release/pending-changes.json
+release/plan-*.json
+release/preflight-report.*
+release/quark-upload-manifest.json
+release/publisher.json
+
+# 用户数据与敏感信息（绝不入库）
+*.db
+*.db-journal
+backups/
+logs/
+*.log
+.env
+.env.*
+credentials*
+*.token
+
+# 测试临时产物
+tools/.probe/*.png
+tools/.probe/*.output
+tmp/
+.tmp/
+
+# 编辑器/系统
+.vscode/
+.idea/
+Thumbs.db
+Desktop.ini
+.DS_Store
+# 测试台架/探针/用户数据备份/夸克staging（绝不入库）
+tools/.probe/
+release/quark-upload/
+*-userdata/

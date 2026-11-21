@@ -1,0 +1,8 @@
+{
+ "kiwi_aram_adapt_name": "物理转魔法",
+ "kiwi_bigbrain_tooltip": "获得<shield>@TotalShield@护盾值</shield>。阵亡时或耗尽后70秒重置。",
+ "kiwi_aram_bigbrain_name": "超强大脑",
+ "kiwi_aram_allforyou_name": "全心为你",
+ "kiwi_aram_apexinventor_name": "尖端发明家",
+ "kiwi_bigbrain_summary": "每拥有<scaleAP>%i:scaleAP%@AP@法术强度</scaleAP>就会获得<shield>@ShieldBase@护盾值</shield>。阵亡时或耗尽后70秒重置。"
+}

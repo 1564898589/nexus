@@ -1,0 +1,19 @@
+{
+  "region": "kr",
+  "tier": "emerald_plus",
+  "position": "all",
+  "mode": "ranked",
+  "autoUpdate": true,
+  "updateIntervalHours": 6,
+  "autoBackup": true,
+  "backupKeep": 10,
+  "backupIntervalHours": 24,
+  "favorites": [],
+  "mainRole": "MID",
+  "mainChampions": [],
+  "recentChampions": [],
+  "reduceMotion": false,
+  "aiEnabled": true,
+  "lcuAutoConnect": true,
+  "lcuConfirmApply": true
+}

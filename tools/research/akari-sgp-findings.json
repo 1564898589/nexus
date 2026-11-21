@@ -1,0 +1,45 @@
+{
+  "researchedAt": "2026-11-19",
+  "source": "LeagueAkari/LeagueAkari (GitHub, dev branch; 原 Hanxven/league-akari)",
+  "license": "GPL-3.0（仅研究接口事实，不复制代码；NEXUS 自行实现）",
+  "method": "GitHub Contents API 逐文件读取并 base64 解码，原文存档于 tools/research/akari-*.ts",
+  "note": "Akari 最新 README 声明不再支持腾讯运营区，但 dev 源码内置配置（updatedAt 2026-07-18）仍含腾讯 SGP 地址；lol-copilot 项目 2026-11-01 在 HN1 实测 SGP 深分页可用（entitlements token）。地址与路径为源码事实，本机连通性仍需用户实机验证。",
+  "verifiedFacts": {
+    "tencentSgpServers": {
+      "HN1": { "name": "艾欧尼亚", "host": "https://hn1-k8s-sgp.lol.qq.com:21019" },
+      "HN10": { "name": "黑色玫瑰", "host": "https://hn10-k8s-sgp.lol.qq.com:21019" },
+      "NJ100": { "name": "联盟一区", "host": "https://nj100-sgp.lol.qq.com:21019" },
+      "GZ100": { "name": "联盟二区", "host": "https://gz100-sgp.lol.qq.com:21019" },
+      "CQ100": { "name": "联盟三区", "host": "https://cq100-sgp.lol.qq.com:21019" },
+      "TJ100": { "name": "联盟四区", "host": "https://tj100-sgp.lol.qq.com:21019" },
+      "TJ101": { "name": "联盟五区", "host": "https://tj101-sgp.lol.qq.com:21019" },
+      "BGP2": { "name": "峡谷之巅", "host": "https://bgp2-k8s-sgp.lol.qq.com:21019" },
+      "PBE": { "name": "体验服", "host": "https://pbe-sgp.lol.qq.com:21019" },
+      "PREPBE": { "name": "预体验服", "host": "https://prepbe-sgp.lol.qq.com:21019" }
+    },
+    "regionIdMapping": "国服 SGP 服务器 ID = TENCENT_{客户端 rso_platform_id 大写}；大区合并后旧 HN2-HN12/EDU1/BGP1 代码已被 NJ100/GZ100/CQ100/TJ100/TJ101/BGP2 等取代",
+    "token": "LCU /lol-league-client/v1/entitlements 的 accessToken，Authorization: Bearer；跨区查询复用同一 token 指向目标大区主机（Akari 称『有限的跨区查询』）",
+    "endpoints": {
+      "history": "/match-history-query/v1/products/lol/player/{puuid}/SUMMARY?startIndex=&count=[&tag=&tagsQueryType=]",
+      "gameSummary": "/match-history-query/v1/products/lol/{subId}_{gameId}/SUMMARY",
+      "gameDetails": "/match-history-query/v1/products/lol/{subId}_{gameId}/DETAILS",
+      "subId": "腾讯 = rso_platform_id（如 HN1）；直营服 = regionPathParam（EUW1/JP1/PBE1）或服务器 ID"
+    },
+    "responseShape": {
+      "history": "{ games: [ { metadata: {match_id, participants, tags, private,...}, json: { gameId, gameCreation, gameDuration, gameMode, queueId, platformId, participants:[扁平结构], teams:[...] } } ] }",
+      "participant": "扁平字段直接位于 participant：puuid/riotIdGameName/riotIdTagLine/summonerName/championId/teamId/win/kills/deaths/assists/goldEarned/item0-6/spell1Id/spell2Id/perks.styles/individualPosition/teamPosition/champLevel/totalMinionsKilled/neutralMinionsKilled/totalDamageDealtToChampions/visionScore",
+      "bugFoundInNexus": "NEXUS 旧 normalizeGame 未解包 {metadata,json} 外层，SGP 即使连通也会解析出空参与者"
+    },
+    "riotClusters": {
+      "KR/JP": "https://apne1-red.pp.sgp.pvp.net",
+      "EUW/RU/TR1": "https://euc1-red.pp.sgp.pvp.net",
+      "NA1/BR1/LA1/LA2/PBE": "https://usw2-red.pp.sgp.pvp.net",
+      "OC1/SG2/PH2/VN2/TH2/TW2": "https://apse1-red.pp.sgp.pvp.net"
+    }
+  },
+  "crossChecks": [
+    "lol-copilot docs/match-history.md：2026-11-01 HN1 实测 SGP 21-520 场深分页可用，LCU 21+ 重复第一页",
+    "Frank (SYJun404/frank)：同路径同 token 机制，SGP 失败回退 LCU",
+    "NEXUS 现有 sgp.js 路径与之一致；主机名与响应解包需按本研究修正"
+  ]
+}

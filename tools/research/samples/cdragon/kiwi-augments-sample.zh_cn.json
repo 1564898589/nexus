@@ -1,0 +1,69 @@
+[
+ {
+  "id": 1205,
+  "augmentNameId": "ARAM_ADAPt",
+  "nameTRA": "物理转魔法",
+  "simpleNameTRA": "",
+  "summaryDescription": "",
+  "augmentSmallIconPath": "/lol-game-data/assets/ASSETS/UX/Cherry/Augments/Icons/ADAPt_small.png",
+  "augmentLargeIconPath": "/lol-game-data/assets/ASSETS/UX/Cherry/Augments/Icons/ADAPt_large.png",
+  "rarity": "kSilver",
+  "augmentDisplayTags": [
+   "kGeneral"
+  ]
+ },
+ {
+  "id": 1141,
+  "augmentNameId": "ARAM_AllForYou",
+  "nameTRA": "全心为你",
+  "simpleNameTRA": "",
+  "summaryDescription": "",
+  "augmentSmallIconPath": "/lol-game-data/assets/ASSETS/UX/Cherry/Augments/Icons/AllForYou_small.png",
+  "augmentLargeIconPath": "/lol-game-data/assets/ASSETS/UX/Cherry/Augments/Icons/AllForYou_large.png",
+  "rarity": "kGold",
+  "augmentDisplayTags": [
+   "kResilience",
+   "kAlly"
+  ]
+ },
+ {
+  "id": 1002,
+  "augmentNameId": "ARAM_ApexInventor",
+  "nameTRA": "尖端发明家",
+  "simpleNameTRA": "",
+  "summaryDescription": "",
+  "augmentSmallIconPath": "/lol-game-data/assets/ASSETS/UX/Cherry/Augments/Icons/ApexInventor_small.png",
+  "augmentLargeIconPath": "/lol-game-data/assets/ASSETS/UX/Cherry/Augments/Icons/ApexInventor_large.png",
+  "rarity": "kGold",
+  "augmentDisplayTags": [
+   "kSpeed",
+   "kUtility"
+  ]
+ },
+ {
+  "id": 2087,
+  "augmentNameId": "ARAM_Archmage",
+  "nameTRA": "大法师",
+  "simpleNameTRA": "",
+  "summaryDescription": "",
+  "augmentSmallIconPath": "/lol-game-data/assets/ASSETS/UX/Cherry/Augments/Icons/Eureka_small.png",
+  "augmentLargeIconPath": "/lol-game-data/assets/ASSETS/UX/Cherry/Augments/Icons/Eureka_large.png",
+  "rarity": "kPrismatic",
+  "augmentDisplayTags": [
+   "kUtility"
+  ]
+ },
+ {
+  "id": 1004,
+  "augmentNameId": "ARAM_BacktoBasics",
+  "nameTRA": "回归基本功",
+  "simpleNameTRA": "",
+  "summaryDescription": "",
+  "augmentSmallIconPath": "/lol-game-data/assets/ASSETS/UX/Cherry/Augments/Icons/BackToBasics_small.png",
+  "augmentLargeIconPath": "/lol-game-data/assets/ASSETS/UX/Cherry/Augments/Icons/BackToBasics_large.png",
+  "rarity": "kPrismatic",
+  "augmentDisplayTags": [
+   "kGeneral"
+  ]
+ }
+]

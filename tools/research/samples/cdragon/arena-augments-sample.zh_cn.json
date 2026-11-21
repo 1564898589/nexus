@@ -1,0 +1,131 @@
+[
+ {
+  "apiName": "WarmupRoutine",
+  "calculations": {},
+  "dataValues": {
+   "DamagePerStack": [
+    0.009999999776482582,
+    0.009999999776482582,
+    0.009999999776482582,
+    0.009999999776482582,
+    0.009999999776482582,
+    0.009999999776482582,
+    0.009999999776482582
+   ],
+   "MaxLevel": [
+    2,
+    2,
+    2,
+    2,
+    2,
+    2,
+    2
+   ],
+   "MaxLevelExtraStacksPerSuccess": [
+    2,
+    2,
+    2,
+    2,
+    2,
+    2,
+    2
+   ],
+   "MaxStacks": [
+    20,
+    20,
+    40,
+    60,
+    60,
+    60,
+    60
+   ]
+  },
+  "desc": "获得召唤师技能<spellName>热身动作</spellName>。<br><br>引导你的内在之舞，每秒使你的伤害提升2%，至多至@MaxStacks@%。",
+  "iconLarge": "assets/ux/cherry/augments/icons/warmuproutine_large.png",
+  "iconSmall": "assets/ux/cherry/augments/icons/warmuproutine_small.png",
+  "id": 93,
+  "name": "热身动作",
+  "rarity": 0,
+  "tooltip": "获得召唤师技能<spellName>热身动作</spellName>。<br><br>引导你的内在之舞，每秒使你的伤害提升2%，至多至@MaxStacks*100@%。"
+ },
+ {
+  "apiName": "Vanish",
+  "calculations": {},
+  "dataValues": {
+   "MSBoost": [
+    0.25,
+    0.25,
+    0.25,
+    0.4000000059604645,
+    0.4000000059604645,
+    0.4000000059604645,
+    0.4000000059604645
+   ],
+   "MaxLevel": [
+    2,
+    2,
+    2,
+    2,
+    2,
+    2,
+    2
+   ],
+   "StealthDuration": [
+    3,
+    3,
+    6,
+    6,
+    6,
+    6,
+    6
+   ]
+  },
+  "desc": "获得召唤师技能<spellName>遁入暗影</spellName>。<br><br><rules><spellName>遁入暗影</spellName>会使你进入<keywordStealth>潜行</keywordStealth>状态。</rules>",
+  "iconLarge": "assets/ux/cherry/augments/icons/vanish_large.png",
+  "iconSmall": "assets/ux/cherry/augments/icons/vanish_small.png",
+  "id": 89,
+  "name": "遁入暗影",
+  "rarity": 1,
+  "tooltip": "进入<keywordStealth>潜行</keywordStealth>状态，持续@StealthDuration@秒或直到你进行攻击或施放技能为止。"
+ },
+ {
+  "apiName": "GoHChemtechPutrifier",
+  "calculations": {},
+  "dataValues": {
+   "GrievousAmount": [
+    0.4000000059604645,
+    0.4000000059604645,
+    0.4000000059604645,
+    0.4000000059604645,
+    0.4000000059604645,
+    0.4000000059604645,
+    0.4000000059604645
+   ],
+   "GrievousDuration": [
+    3,
+    3,
+    3,
+    3,
+    3,
+    3,
+    3
+   ],
+   "MaxLevel": [
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1
+   ]
+  },
+  "desc": "你造成的所有伤害都会施加<keyword>重伤</keyword>。",
+  "iconLarge": "assets/ux/cherry/augments/icons/chemtechpurifier_large.png",
+  "iconSmall": "assets/ux/cherry/augments/icons/chemtechpurifier_small.png",
+  "id": 347,
+  "name": "炼金科技纯化器",
+  "rarity": 4,
+  "tooltip": "对敌方英雄造成<Damage>伤害</Damage>时会施加持续@GrievousDuration@秒的<keyword>@GrievousAmount*100@%重伤</keyword>效果。"
+ }
+]
