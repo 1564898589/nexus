@@ -88,7 +88,7 @@ async function drawAlerts(root) {
 async function scan(root) {
   const status = root.querySelector('#wr-status');
   status.textContent = '读取中…';
-  try { live = await window.nexus.warroom.live(); }
+  try { live = await window.nexus.warroom.live({ refresh: true }); }
   catch (e) { status.textContent = '读取失败：' + String(e.message || e); return; }
   const teams = root.querySelector('#wr-teams');
   if (!live || !live.active) {
@@ -98,7 +98,7 @@ async function scan(root) {
     const mb = teams.querySelector('#wr-manual'); if (mb) mb.addEventListener('click', () => manualMode(root));
     return;
   }
-  status.textContent = `选人阶段 · ${live.tencent ? '国服 ' + (live.platformId || '') : ''} · 已解析 ${[...live.myTeam, ...live.theirTeam].filter(p => p && p.puuid).length}/10 人`;
+  status.textContent = `选人阶段 · ${live.tencent ? '国服 ' + (live.platformId || '') : ''} · 已解析 ${[...live.myTeam, ...live.theirTeam].filter(p => p && p.puuid).length}/10 人 · ${live.refreshed ? '实时战绩评级' : '本地缓存'}`;
   const side = (team, label, color, cls) => `<div class="bp-side ${cls}"><div class="bp-side-title">${label}</div><div class="flex-col gap-2">${
     team.map((p, i) => playerRow(p, i)).join('')
   }</div></div>`;
@@ -197,7 +197,7 @@ async function genReport(root) {
   if (!live || !live.active) { toast('请先读取当前选人，或使用手动模式', 'info'); return; }
   wrap.innerHTML = '<div class="panel"><div class="skeleton" style="height:200px"></div></div>';
   const toCell = (p) => p ? { puuid: p.puuid, name: p.name, championId: p.championId, position: p.position } : null;
-  try { report = await window.nexus.scouting.report(live.myTeam.map(toCell), live.theirTeam.map(toCell)); }
+  try { report = await window.nexus.scouting.report(live.myTeam.map(toCell), live.theirTeam.map(toCell), { refresh: true }); }
   catch (e) { wrap.innerHTML = `<div class="panel"><div class="empty-state">${icon('warn', 40)}<div class="es-title">侦察报告生成失败</div><div>${esc(String(e.message || e))}</div><button class="btn primary sm mt-3" id="wr-retry">重试</button></div></div>`; wrap.querySelector('#wr-retry').addEventListener('click', () => genReport(root)); return; }
   if (!report || report.__error) { wrap.innerHTML = `<div class="panel text-3">${esc(report && report.__error || '未知错误')}</div>`; return; }
   const section = (title, items, color) => items.length ? `<div class="mb-4"><div class="section-title" style="font-size:13px">${title}</div><div class="flex-col gap-2">${items.map(it => `<div class="flex gap-2 fs-13" style="line-height:1.7"><span class="badge ${it.kind === 'fact' ? 'teal' : it.kind === 'inference' ? 'purple' : 'gold'}" style="flex-shrink:0">${it.kind === 'fact' ? '事实' : it.kind === 'inference' ? '推断' : '建议'}</span><span class="text-2">${esc(it.text)}</span></div>`).join('')}</div></div>` : '';
