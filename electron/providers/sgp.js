@@ -126,6 +126,17 @@ async function getGameSummary({ token, platformId, tencent, gameId, customHost }
   return tryHosts(hosts, path, token);
 }
 
+// 单局 DETAILS（实验性只读探测）：尝试 DETAILS 端点，返回原始 json 供检查 perks/加点/timeline 字段。
+// 国服可用性未确认；失败/404 由调用方诚实降级，不伪造。
+async function getGameDetails({ token, platformId, tencent, gameId, customHost }) {
+  const hosts = candidateHosts(platformId, tencent, customHost);
+  if (!hosts.length) throw new Error('无法确定 SGP 服务器地址（缺少大区信息）');
+  if (!token) throw new Error('缺少 SGP 凭据（需登录客户端获取 entitlements token）');
+  const subId = subIdFor(platformId, tencent);
+  const path = `/match-history-query/v1/products/lol/${encodeURIComponent(subId)}_${encodeURIComponent(gameId)}/DETAILS`;
+  return tryHosts(hosts, path, token);
+}
+
 // Normalize an SGP game into our unified match shape.
 // 真实响应外层为 { metadata, json }（Akari 类型定义证实），必须先解包 json。
 // 按 PUUID 定位本人，绝不假设 participant[0]。
@@ -167,4 +178,4 @@ function normalizeParticipant(p) {
   };
 }
 
-module.exports = { TENCENT_REGIONS, RIOT_REGIONS, regionById, subIdFor, candidateHosts, getMatchHistory, getGameSummary, normalizeGame, normalizeParticipant };
+module.exports = { TENCENT_REGIONS, RIOT_REGIONS, regionById, subIdFor, candidateHosts, getMatchHistory, getGameSummary, getGameDetails, normalizeGame, normalizeParticipant };
