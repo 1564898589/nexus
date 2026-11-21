@@ -269,6 +269,7 @@ function registerIpc(ctx) {
   const scouting = require('../analytics/scouting');
   handle('player:available', () => players.available());
   handle('player:channels', () => players.channels());
+  handle('player:self', () => players.self());
   handle('player:search', (name, opts) => players.search(name, opts || {}));
   handle('player:confirmCandidate', (c) => players.confirmCandidate(c));
   handle('player:searchHistory', (limit) => players.searchHistory(limit || 30));
@@ -294,30 +295,30 @@ function registerIpc(ctx) {
   handle('player:regions', () => ({ tencent: require('../providers/sgp').TENCENT_REGIONS, riot: require('../providers/sgp').RIOT_REGIONS }));
   handle('player:resolveCell', (cell) => players.resolveCell(cell));
   // Live warroom: resolve both champ-select teams into player intel.
-  handle('warroom:live', async () => {
+  handle('warroom:live', async (opts = {}) => {
     const s = lcu.getState();
     const cs = s.champSelect;
     if (!cs) return { active: false, phase: s.phase, loggedIn: s.loggedIn, tencent: s.tencent };
-    const resolveTeam = async (team) => { const out = []; for (const cell of team) out.push(await players.resolveCell(cell)); return out; };
+    // refresh=true：并行拉取双方真实历史再评级（选人阶段看队友/对手上等马/下等马）；默认缓存即时返回
+    const refresh = !!opts.refresh;
+    const resolveTeam = (team) => Promise.all((team || []).map(cell => players.resolveCell(cell, { refresh })));
     const myTeam = await resolveTeam(cs.myTeam || []);
     const theirTeam = await resolveTeam(cs.theirTeam || []);
-    return { active: true, phase: cs.phase, myTeam, theirTeam, bans: cs.bans, loggedIn: s.loggedIn, tencent: s.tencent, platformId: s.platformId };
+    return { active: true, phase: cs.phase, myTeam, theirTeam, bans: cs.bans, loggedIn: s.loggedIn, tencent: s.tencent, platformId: s.platformId, refreshed: refresh };
   });
   // scouting: teams = arrays of {puuid,name,championId,champKey,position}; resolve profiles then build report
-  handle('scouting:report', async (blue, red) => {
+  handle('scouting:report', async (blue, red, opts = {}) => {
     const cmap = Q.championMap(db);
     const champStats = Q.metaStats(db, config);
-    const resolve = async (team) => {
-      const out = [];
-      for (const cell of (team || [])) {
-        if (!cell) { out.push(null); continue; }
-        let prof = null;
-        if (cell.puuid) { try { prof = await players.profile(cell.puuid, { refresh: false, count: 20 }); } catch {} }
-        out.push({ name: cell.name || (prof && prof.player && prof.player.name), puuid: cell.puuid, championId: cell.championId, champKey: cell.champKey, position: cell.position, rating: prof && prof.rating, stats: prof && prof.stats });
-      }
-      return out;
+    const refresh = !!opts.refresh;
+    const resolveOne = async (cell) => {
+      if (!cell) return null;
+      let prof = null;
+      if (cell.puuid) { try { prof = await players.profile(cell.puuid, { refresh, count: 20 }); } catch {} }
+      return { name: cell.name || (prof && prof.player && prof.player.name), puuid: cell.puuid, championId: cell.championId, champKey: cell.champKey, position: cell.position, rating: prof && prof.rating, stats: prof && prof.stats, live: refresh };
     };
-    const B = await resolve(blue), R = await resolve(red);
+    const B = await Promise.all((blue || []).map(resolveOne));
+    const R = await Promise.all((red || []).map(resolveOne));
     return scouting.buildScouting(B, R, champStats, cmap);
   });
 
@@ -328,6 +329,26 @@ function registerIpc(ctx) {
     win: m.me ? m.me.win : null, championId: m.me ? m.me.championId : null, position: m.me ? m.me.position : null,
     kills: m.me ? m.me.kills : null, deaths: m.me ? m.me.deaths : null, assists: m.me ? m.me.assists : null, source: m.source,
   })));
+  // 实验性只读探测：SGP DETAILS（perks/加点/timeline 可用性），失败诚实返回 error
+  handle('player:matchTimeline', (gameId, puuid) => players.matchTimeline(gameId, puuid));
+  handle('player:matchDetailsProbe', async (gameId) => {
+    try {
+      const s = lcu.getState();
+      if (!s.loggedIn) return { ok: false, error: '需要已登录客户端' };
+      const token = await lcu.getEntitlementsToken();
+      const sgp = require('../providers/sgp');
+      const raw0 = await sgp.getGameDetails({ token, platformId: s.platformId, tencent: s.tencent, gameId, customHost: config.get('sgpHostOverride') || null });
+      const raw = (raw0 && raw0.raw) || raw0;
+      const g = (raw && (raw.json || raw.game)) || raw || {};
+      const p0 = (g.participants || [])[0] || {};
+      const fr = (g.frames || [])[1] || (g.frames || [])[0] || {};
+      const pf = (fr.participantFrames || {});
+      const pfKey = Object.keys(pf)[0];
+      const pf0 = pfKey ? pf[pfKey] : {};
+      const evTypes = [...new Set((g.frames || []).flatMap(f => (f.events || []).map(e => e.type)))];
+      return { ok: true, topKeys: Object.keys(g), participantKeys: Object.keys(p0), hasFrames: !!(g.frames || g.timeline), frameInterval: g.frameInterval, frameCount: (g.frames || []).length, participantFrameKeys: Object.keys(pf0), hasGold: pf0.totalGold != null || pf0.currentGold != null, eventTypes: evTypes, hasPerks: !!p0.perks };
+    } catch (e) { return { ok: false, error: String(e.message || e) }; }
+  });
   // 单局十人缓存回退：客户端离线时仍可用本地缓存的真实 participants 展示对局表
   handle('player:matchParticipants', (gameId, puuid) => {
     const gid = String(gameId);
