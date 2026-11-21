@@ -6,7 +6,7 @@ Windows 桌面端（Electron）。多服务器数据中心（韩服 OP.GG / 国�
 
 ## 快速启动（本地）
 
-- **双击 `启动NEXUS.bat`**（或桌面快捷方式 `NEXUS`）：
+- **双击 `START-NEXUS.bat`**（或桌面快捷方式 `NEXUS`）：
   1. 若已安装正式版 → 直接启动安装版；
   2. 否则用项目内 Electron 启动源码（开发模式）；
   3. 首次运行自动 `npm install` 后再启动。
