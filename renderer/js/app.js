@@ -322,8 +322,13 @@ async function boot() {
   window.nexus.on('data-state', (s) => { store.dataState = s; renderSyncStatus(); if (currentView && currentView.onDataState) currentView.onDataState(s); });
   window.nexus.on('sources-state', (list) => { store.sources = list || []; renderSyncStatus(); if (currentView && currentView.onSourcesState) currentView.onSourcesState(list); });
   let prevPhase = store.lcuState ? store.lcuState.phase : 'None';
+  let prevLoggedIn = !!(store.lcuState && store.lcuState.loggedIn);
+  // 启动时若已登录，同步本人头像图标到缓存（离线也显示真实图标）
+  if (store.lcuState && store.lcuState.loggedIn) window.nexus.player.syncSelfIcon().catch(() => {});
   window.nexus.on('lcu-state', (s) => {
     store.lcuState = s; renderLcuPill();
+    if (s && s.loggedIn && !prevLoggedIn) window.nexus.player.syncSelfIcon().catch(() => {});
+    prevLoggedIn = !!(s && s.loggedIn);
     if (s && s.phase === 'ChampSelect' && prevPhase !== 'ChampSelect') {
       toast('检测到英雄选择阶段，已打开对局实时准备面板', 'info', 4000);
       if (store.route.name !== 'lcu') navigate('lcu');

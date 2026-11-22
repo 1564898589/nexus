@@ -172,4 +172,137 @@ function pickAdviceByPosition(myTeam, enemyTeam, pool, stats, opts = {}) {
   return { byPosition, note: '每个空位按该位置的真实 OP.GG 统计独立推荐；阵容契合度为启发式分析。' };
 }
 
-module.exports = { explainCounter, explainBuild, metaSummary, laneMatchup, compareTeams, pickAdvice, pickAdviceByPosition };
+const SPIKE_CN = { early: '前期（1–6 级）', mid: '中期（6–13 级）', late: '后期（13 级+/三件套）', even: '全期均衡' };
+function spikeOf(tr) {
+  if (tr.early >= 2 && tr.late <= 1) return 'early';
+  if (tr.late >= 2 && tr.early <= 1) return 'late';
+  if (tr.early >= 2 && tr.late >= 2) return 'even';
+  return 'mid';
+}
+
+/** Mechanism-level laning guide derived from the real trait matchup (not a generic
+ *  tip list). Every line is conditioned on THIS champion pair's traits; the optional
+ *  counterStat anchors the verdict in real OP.GG samples. Heuristic, clearly labelled. */
+function laneGuide(my, enemy, position, counterStat, opts = {}) {
+  const a = traitsFor(my), b = traitsFor(enemy);
+  const pos = position || 'MID';
+  const dims = ['frontline', 'burst', 'dps', 'sustain', 'cc', 'mobility', 'early', 'late', 'poke', 'waveclear'];
+  let edge = 0; for (const d of dims) edge += (a[d] - b[d]);
+  let myWin = null;
+  if (counterStat && counterStat.winRate != null) myWin = opts.perspective === 'enemy' ? 1 - counterStat.winRate : counterStat.winRate;
+  const score = edge + (myWin != null ? (myWin - 0.5) * 20 : 0);
+  const verdict = score > 3 ? 'advantage' : score < -3 ? 'disadvantage' : 'even';
+  const verdictText = verdict === 'advantage' ? '该对位你占优，可主动压迫' : verdict === 'disadvantage' ? '该对位你偏劣，以稳为主' : '该对位均势，拼熟练度与打野';
+  const sa = spikeOf(a), sb = spikeOf(b);
+  const spikeText = `你的强势期：${SPIKE_CN[sa]}；${cn(enemy)}：${SPIKE_CN[sb]}。` +
+    (sa === 'early' && sb !== 'early' ? '你比对方更早成型，前期要打出压制。' : sa === 'late' && sb !== 'late' ? '你比对方更晚成型，前期别送，拖到后期曲线更优。' : '双方节奏接近，谁先失误谁崩。');
+
+  const trade = [];
+  if (a.burst >= 2 && b.mobility <= 1 && b.sustain <= 1) trade.push(`你爆发高、${cn(enemy)} 缺位移/回复：抓对方补刀硬直打一套，打完即撤，别恋战给反打机会。`);
+  if (b.poke >= 2 && a.sustain <= 1) trade.push(`${cn(enemy)} 消耗强、你回复弱：站兵线后挡技能，血线低于 60% 就回城或呼叫打野，别硬换。`);
+  if (a.sustain >= 2 && b.burst <= 1) trade.push(`你续航占优：主动短换血（换一波就退），靠回复把对方耗回家赚经验差。`);
+  if (a.frontline >= 2 && b.frontline <= 1) trade.push(`你身板更硬：可压前换血，逼 ${cn(enemy)} 退到塔下漏刀。`);
+  if (b.burst >= 2 && a.mobility <= 1) trade.push(`${cn(enemy)} 爆发高而你腿短：留位移/闪现躲关键技能，对方技能空了再反打。`);
+  if (a.cc >= 2 && b.mobility >= 2) trade.push(`你控制足：捏硬控等 ${cn(enemy)} 交位移后再控，配合打野基本必杀。`);
+  if (b.burst >= 2 && a.mobility >= 2) trade.push(`${cn(enemy)} 爆发高但你机动足：用位移躲关键技能（大招/控制），对方技能空窗期再反打。`);
+  if (a.poke >= 2 && b.mobility <= 1) trade.push(`你消耗强、${cn(enemy)} 腿短：保持距离持续 poke 压血线，别被近身打一套。`);
+  if (a.mobility >= 2 && b.mobility <= 1 && !trade.length) trade.push(`你机动占优：可主动近身换血再撤，${cn(enemy)} 追不上也留不住你。`);
+  if (!trade.length) trade.push('机制差异不极端：换血取决于技能命中率与兵线位置，优先在己方兵线多时换血。');
+
+  const wave = [];
+  if (a.waveclear >= 2 && b.waveclear <= 1) wave.push(`你清线快：速推线进塔逼对方漏刀/被迫守塔，但推完立刻做视野防抓。`);
+  if (b.poke >= 2 && a.waveclear <= 1) wave.push(`${cn(enemy)} 清线/消耗强：别硬推，把线控在己方塔前安全补刀，等打野介入。`);
+  if (a.early >= 2 && b.late >= 2) wave.push(`你前期强：抢 2/抢 3 级先手，把等级优势转成塔皮与河蟹。`);
+  if (a.late >= 2 && b.early >= 2) wave.push(`你偏后期：前期稳补刀控线，宁可漏几个刀也别送人头。`);
+  if (a.splitpush >= 2) wave.push('中后期可边线分推牵制，但先确认队友能 4v4 拖住再深推。');
+  if (!wave.length) wave.push('默认 last-hit 控线，兵线过河前先在河道做眼；推线时机选在对方回城/被击杀后。');
+
+  const gank = [];
+  if (a.mobility <= 1 && (b.cc >= 2 || b.engage >= 2)) gank.push(`你腿短、${cn(enemy)} 有硬控/先手：6 级后最容易被抓，河道/三角草常驻眼，兵线别过河。`);
+  if (a.mobility >= 2) gank.push('你机动高：可适度压线，但位移留作逃生，别交位移打输出。');
+  if (a.cc >= 2) gank.push('你有硬控：被 Gank 时反控对方打野争取逃生/反杀，提前呼叫己方打野反蹲。');
+  gank.push('通用：3 分钟前在河道/敌方野区入口做眼；小地图对方打野消失立即后撤，别赌。');
+
+  const win = [];
+  if (verdict === 'advantage') win.push('占优路：把压制转成塔皮→河蟹→支援中路，带动全场节奏，别只盯着对位单杀。');
+  else if (verdict === 'disadvantage') win.push('劣势路：目标是「不崩」而非单杀，控线吃经验，等打野/团战找回场子。');
+  else win.push('均势路：抓对方技能冷却/补刀硬直的小窗口积累血量优势，呼叫打野打破平衡。');
+  if (sa === 'late') win.push('你的曲线在后期：团战站位靠后，存活输出比先手更重要。');
+  if (a.frontline >= 2) win.push('团战你承担前排/开团，盯对方后排走位，但别脱节被秒。');
+
+  return {
+    position: pos, verdict, verdictText, edgeScore: Math.round(score), myWinRate: myWin,
+    spike: { mine: sa, enemy: sb, text: spikeText },
+    sections: [
+      { key: 'trade', title: '换血窗口', icon: 'sword', lines: trade },
+      { key: 'wave', title: '兵线处理', icon: 'list', lines: wave },
+      { key: 'gank', title: '防 Gank / 呼叫打野', icon: 'eye', lines: gank },
+      { key: 'win', title: '取胜路径', icon: 'target', lines: win },
+    ],
+    note: '对线指南由英雄机制标签推导（启发式），非 OP.GG 官方结论；对位胜率（如有）来自真实样本。',
+  };
+}
+
+const JG_ARCH = {
+  aggressive: { name: '激进速 3 型', route: ['红 Buff', '锋喙鸟', '暗影狼', '蓝 Buff', '河蟹 / 抓人'], reason: '前期强势 + 高机动/先手，红开速 3 抢节奏。' },
+  fullclear: { name: '全清发育型', route: ['蓝 Buff', '魔沼蛙', '暗影狼', '锋喙鸟', '红 Buff', '石甲虫', '河蟹'], reason: '偏后期持续输出，全清到 6 级大招就位再出山。' },
+  tankgank: { name: '坦克 Gank 型', route: ['红 Buff', '暗影狼', '蓝 Buff', '抓人 / 河蟹'], reason: '身板硬 + 双控，3 级带双 Buff 即可配合队友抓人。' },
+  apkite: { name: 'AP 风筝型', route: ['蓝 Buff', '魔沼蛙', '暗影狼', '锋喙鸟', '红 Buff', '河蟹'], reason: 'AP + 高机动，拉野风筝少伤刷野，蓝开续航。' },
+};
+function jgArchetype(tr) {
+  if (tr.early >= 3 && (tr.mobility >= 2 || tr.engage >= 2)) return 'aggressive';
+  if (tr.frontline >= 2 && tr.cc >= 2 && tr.engage >= 2) return 'tankgank';
+  if (tr.ap >= 2 && tr.mobility >= 2) return 'apkite';
+  if (tr.dps >= 2 && tr.late >= 2 && tr.early <= 1) return 'fullclear';
+  return tr.early >= 2 ? 'aggressive' : 'fullclear';
+}
+
+/** Champion-adaptive jungle clear plan: archetype + real camp order + first-gank
+ *  timing + invade risk vs the enemy jungler + objective priority. Camp names are
+ *  real Summoner's Rift camps; the CHOICE of route is derived from traits. Heuristic. */
+function jungleRoute(my, enemyJungler) {
+  const a = traitsFor(my), b = enemyJungler ? traitsFor(enemyJungler) : null;
+  const arch = jgArchetype(a);
+  const A = JG_ARCH[arch];
+  const farmToSix = arch === 'fullclear' || (a.late >= 2 && a.early <= 1);
+  const firstGank = farmToSix
+    ? { timing: '6 级（约 6–7 分钟）', text: '大招就位后抓压线最深的一路，或先控小龙；前期以刷野到 6 为主，别硬抓。' }
+    : arch === 'tankgank'
+      ? { timing: '3 级（约 2:40）', text: '带双 Buff + 硬控抓有控制队友的一路，留人能力强，优先帮劣势路止损。' }
+      : a.early >= 2
+        ? { timing: '3 级（约 2:30–3:00）', text: '速 3 后抓最近压线 lane，或入侵对方野区；错过窗口就转河蟹控图。' }
+        : { timing: '4–5 级（约 4 分钟）', text: '清完半区到 4–5 级再抓人，优先帮有硬控/压线深的一路，抓完顺势控河蟹。' };
+
+  let invadeRisk = 'mid', invadeText = '双方前期接近：遭遇看技能命中与惩戒，开局在敌方野区入口做眼掌握动向。';
+  if (b) {
+    if (a.early >= 2 && b.early <= 1) { invadeRisk = 'low'; invadeText = `你前期强于 ${cn(enemyJungler)}：可 2–3 级入侵抢 Buff/野怪，压制其发育与等级。`; }
+    else if (b.early >= 2 && a.early <= 1) { invadeRisk = 'high'; invadeText = `${cn(enemyJungler)} 前期强：避免 1v1 遭遇，开局做防守眼，必要时镜像换野区避其锋芒。`; }
+    else if (a.mobility >= 2 && b.mobility <= 1) { invadeRisk = 'low'; invadeText = `你机动高于 ${cn(enemyJungler)}：遭遇可打可退，对方留不住你，主动权在你。`; }
+    else if (b.mobility >= 2 && a.mobility <= 1) { invadeRisk = 'high'; invadeText = `${cn(enemyJungler)} 机动高：别落单深入，留位移/惩戒保命，遭遇优先撤。`; }
+  } else {
+    invadeText = '敌方打野未知：开局默认在河道/敌方野区入口做眼，按对方阵容前期强度决定入侵或防守。';
+  }
+
+  const objective = a.early >= 2
+    ? { priority: '先锋 > 小龙', text: '前期节奏型：8 分钟先锋优先，推塔滚雪球；小龙可让但要换塔皮。' }
+    : a.late >= 2
+      ? { priority: '小龙叠魂', text: '发育型：控小龙叠龙魂，避免无谓团战，拖到成型再决战。' }
+      : { priority: '视线上优势', text: '哪路有线权就控哪侧河蟹/小龙；团战前确保惩戒在手，别空惩戒进团。' };
+
+  const tips = [];
+  if (a.sustain >= 2) tips.push('你续航好：可少回城持续刷野，用等级/经济差压制对方打野。');
+  if (a.cc >= 2) tips.push('你控制足：Gank 先手留人，团战盯对方后排，是队伍节奏发动机。');
+  if (a.dps >= 2 && a.late >= 2) tips.push('你后期输出高：刷野路线尽量不断档，装备成型后接管比赛。');
+  if (arch === 'aggressive') tips.push('激进型务必算对方打野位置：抓人前确认其不在反蹲，别送双 Buff。');
+  if (arch === 'fullclear') tips.push('发育型前 6 级别硬抓：漏抓没关系，到 6 的等级差才是你的武器。');
+  tips.push('通用：每次回城补满状态再出门；惩戒优先留给河蟹/龙/先锋等关键资源。');
+
+  return {
+    champion: my ? cn(my) : null, position: 'JUNGLE', archetype: arch, archetypeName: A.name,
+    route: A.route, routeReason: A.reason, firstGank,
+    invade: { risk: invadeRisk, text: invadeText }, objective, tips,
+    note: '刷野路线由英雄机制标签推导（启发式）；营地为真实召唤师峡谷营地，营序选择按英雄特性自适应，非官方统计。',
+  };
+}
+
+module.exports = { explainCounter, explainBuild, metaSummary, laneMatchup, compareTeams, pickAdvice, pickAdviceByPosition, laneGuide, jungleRoute };

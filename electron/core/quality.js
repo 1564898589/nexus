@@ -48,7 +48,7 @@ function runQualityChecks(db, config) {
   if (fetchedAt) {
     const hours = (Date.now() - new Date(fetchedAt).getTime()) / 3600000;
     const limit = (config && config.get('updateIntervalHours')) || 6;
-    if (hours > limit * 3) add('warn', 'stale', `数据已 ${hours.toFixed(1)} 小时未更新（阈值 ${limit}h）`);
+    if (hours > limit * 3) add('warn', 'stale', `数据已 ${String(parseFloat(hours.toFixed(1)))} 小时未更新（阈值 ${limit}h）`);
   } else if (stats.length) {
     add('warn', 'no-timestamp', '统计缺少采集时间戳');
   }

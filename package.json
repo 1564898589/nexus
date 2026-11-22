@@ -1,6 +1,6 @@
 {
   "name": "nexus-lol-tactical",
-  "version": "2.2.0",
+  "version": "2.3.0",
   "description": "NEXUS - League of Legends Tactical Intelligence Terminal (Windows desktop)",
   "main": "electron/main.js",
   "author": "竖 <1564898589@qq.com>",

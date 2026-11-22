@@ -1,5 +1,5 @@
 // NEXUS hand-rolled SVG charts (no external deps).
-import { esc, DIM_CN } from './util.js';
+import { esc, fx, DIM_CN } from './util.js';
 
 // Radar chart for team composition dimensions.
 export function radar(scores, dims, { size = 300, color = '#0AC8B9', compare = null, compareColor = '#E84057' } = {}) {
@@ -35,7 +35,7 @@ export function radar(scores, dims, { size = 300, color = '#0AC8B9', compare = n
 export function hbar(label, value, max = 100, { color = '', suffix = '', width = '100%' } = {}) {
   const w = Math.max(0, Math.min(100, (value / max) * 100));
   return `<div class="hbar" style="width:${width}">
-    <div class="flex justify-between items-center mb-2"><span class="fs-12 text-2">${esc(label)}</span><span class="num fs-13 text-gold">${esc(value)}${esc(suffix)}</span></div>
+    <div class="flex justify-between items-center mb-2"><span class="fs-12 text-2">${esc(label)}</span><span class="num fs-13 text-gold">${typeof value === 'number' ? fx(value, 2) : esc(value)}${esc(suffix)}</span></div>
     <div class="bar-track"><div class="bar-fill ${color}" style="width:${w}%"></div></div>
   </div>`;
 }
@@ -70,7 +70,7 @@ export function gauge(value, { size = 140, label = '胜率' } = {}) {
   return `<svg viewBox="0 0 ${size} ${size / 1.6}" width="100%" style="max-width:${size}px">
     <path d="M ${cx - r} ${cy} A ${r} ${r} 0 0 1 ${cx + r} ${cy}" fill="none" stroke="rgba(255,255,255,0.08)" stroke-width="10" stroke-linecap="round"/>
     <path d="M ${cx - r} ${cy} A ${r} ${r} 0 0 1 ${x} ${y}" fill="none" stroke="${col}" stroke-width="10" stroke-linecap="round"/>
-    <text x="${cx}" y="${cy - 8}" text-anchor="middle" class="num" fill="${col}" font-size="26" font-weight="700">${(v * 100).toFixed(1)}%</text>
+    <text x="${cx}" y="${cy - 8}" text-anchor="middle" class="num" fill="${col}" font-size="26" font-weight="700">${fx(v * 100, 1)}%</text>
     <text x="${cx}" y="${cy + 10}" text-anchor="middle" fill="#6B7C8C" font-size="11">${esc(label)}</text>
   </svg>`;
 }

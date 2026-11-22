@@ -4,6 +4,7 @@ import { el, esc, pct, fx, num, asset, tierClass, POS_CN, POSITIONS, TAG_CN, sou
 import { store, navigate, getChamp, refreshFavorites } from '../store.js';
 import { gauge, hbar } from '../charts.js';
 import { renderSix } from '../buildplan-ui.js';
+import { jungleRouteHTML } from './intel-common.js';
 
 const stripHtml = (s) => String(s || '').replace(/<br\s*\/?>/gi, '\n').replace(/<[^>]+>/g, '').replace(/\n{3,}/g, '\n\n').trim();
 
@@ -79,8 +80,9 @@ async function ensureBuild(data) {
   if (!data.filter) return;
   const b = buildFor(data);
   const staleKr = data.filter.region === 'kr' && b && !(b.summonerSpellPairs || []).length;
-  if (b && !staleKr) return;
-  if (!b && data.filter.region !== 'cn') return;
+  const lackSkill = b && !(b.skillOrder && b.skillOrder.length);
+  if (b && !staleKr && !lackSkill) return;
+  if (!b && data.filter.region !== 'cn' && data.filter.region !== 'kr') return;
   const nb = await window.nexus.data.build(curKey, curPos).catch(() => null);
   if (nb) data.builds[curPos] = nb;
 }
@@ -161,6 +163,8 @@ function drawBody(root, data) {
       <div id="counters-wrap" class="grid grid-2"></div>
     </div>
 
+    ${curPos === 'JUNGLE' ? '<div id="detail-jungle" class="mt-4"></div>' : ''}
+
     <!-- AI 解读 -->
     <div class="panel mt-4">
       <div class="panel-h"><div class="panel-title">AI 战术解读</div>${sourceTag('heuristic')}</div>
@@ -190,6 +194,13 @@ function drawBody(root, data) {
   const itemsBtn = body.querySelector('#btn-items');
   if (itemsBtn) itemsBtn.addEventListener('click', () => openItemLibrary());
   renderAI(body.querySelector('#ai-wrap'), data);
+  const jg = body.querySelector('#detail-jungle');
+  if (jg) {
+    jg.innerHTML = '<div class="panel tight"><div class="fs-12 text-3">生成刷野路线…</div></div>';
+    window.nexus.analysis.jungleRoute(curKey, null)
+      .then(r => { jg.innerHTML = (r && !r.__error) ? jungleRouteHTML(r) : ''; })
+      .catch(() => { jg.innerHTML = ''; });
+  }
 }
 
 // 装备库 browse：搜索+tag过滤+完整属性/被动描述
@@ -276,7 +287,7 @@ export function renderSpells(wrap, build, data) {
     <div class="mb-4">${pairs ? pairHtml(pairs[0], true) + pairs.slice(1, 3).map(p => pairHtml(p, false)).join('')
       : spells.length ? `<div class="flex gap-3">${spells.map(sp => `<div class="flex-col items-center gap-1"><img class="item-icon" src="${sp.icon ? asset(sp.icon) : ''}" alt="${esc(sp.name)}" data-noimg="1"/><span class="fs-12 text-2">${esc(sp.name)}</span></div>`).join('')}</div>`
       : '<span class="text-3 fs-13">暂无</span>'}</div>
-    <div class="fs-12 text-3 mb-2">技能加点顺序</div>
+    <div class="fs-12 text-3 mb-2">技能加点顺序 ${build && build.skillOrderSource === 'cn101-official' ? '<span class="badge teal" style="font-size:10px">国服官方加点</span>' : ''}</div>
     ${order && order.length ? skillOrderGrid(order)
       : `<div class="text-3 fs-13">该口径页面未提供完整加点顺序，暂不展示（不臆造）。${mainSkillHint(build)}</div>`}
   `;

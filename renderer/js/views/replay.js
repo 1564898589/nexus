@@ -1,8 +1,8 @@
 // Replay Intelligence — per-match analysis on cached real match data.
 import { icon } from '../icons.js';
-import { esc, asset, pct, fx, modal, sourceTag, toast } from '../util.js';
+import { esc, asset, pct, fx, num, modal, sourceTag, toast } from '../util.js';
 import { navigate } from '../store.js';
-import { accountBar, champBy, taggedReport, aiBlock, bindAi, matchRow, modeFilterRow, inMode, modeLabelFor } from './intel-common.js';
+import { accountBar, champBy, taggedReport, aiBlock, bindAi, matchRow, modeFilterRow, inMode, modeLabelFor, ensureIconMaps, itemIcon, spellIcon, runeIcon, styleIcon, goldChartSVG, laneGoldTableHTML, laneGoldTable } from './intel-common.js';
 
 let puuid = null;
 let modeFilter = 'all';
@@ -38,6 +38,14 @@ export async function render(root) {
     toast('战绩已刷新', 'success', 1800);
   });
   await loadList(root);
+  // 登录后批量补全旧缓存的符文/团队曲线/关键节点（限最近几场），完成后刷新列表与详情
+  try {
+    const av = await window.nexus.player.available();
+    if (av && av.loggedIn && puuid) {
+      const bf = await window.nexus.player.backfillRecent(puuid, 6).catch(() => null);
+      if (bf && bf.upgraded > 0) await loadList(root);
+    }
+  } catch {}
 }
 
 // 进入复盘时确保本人近期战绩已缓存：缓存为空或超过 5 分钟未刷新且客户端在线时自动拉取。
@@ -61,6 +69,7 @@ async function loadList(root) {
     detail.innerHTML = '';
     return;
   }
+  await ensureIconMaps();
   const matches = await window.nexus.replay.list(puuid, 100).catch(() => []);
   if (!matches.length) {
     list.innerHTML = '<div class="empty-state">' + icon('chart', 40) + '<div class="es-title">该账号暂无缓存对局</div><div>连接并登录国服客户端后点击右上角「刷新」拉取战绩。</div></div>';
@@ -98,6 +107,51 @@ async function drawKbTip(detail, r) {
   </details>`;
 }
 
+// 图文并茂视觉面板：真实装备/召唤师技能/符文/加点 + 经济曲线（缓存或在线拉取）
+function replayVisualPanel(r) {
+  const me = r.me || {};
+  const items = (me.items || []).slice(0, 6);
+  const spells = (me.spells || []).slice(0, 2);
+  const perks = me.perks || null;
+  const tl = r.timeline || null;
+  if (tl) tl.enemyFinal = laneGoldTable(r.participants || [], r.myTeamId).enTotal || null;
+  const skillSeq = tl && tl.skillOrder ? tl.skillOrder.map(e => ['Q', 'W', 'E', 'R'][(e.slot || 1) - 1] || '?').join(' ') : null;
+  const hasAny = items.length || spells.length || perks || tl;
+  if (!hasAny) return `<div class="panel tight mb-3"><div class="fs-12 text-3">本场装备/符文/经济曲线：缓存未含这些字段（旧缓存）。连接客户端后刷新或打开单局详情可补全。</div></div>`;
+  return `<div class="panel tight mb-3">
+    <div class="fs-12 fw-6 mb-2">本场出装 / 符文 / 加点 / 经济 <span class="badge gray">真实数据</span></div>
+    <div class="flex gap-3 items-center" style="flex-wrap:wrap">
+      <div class="flex gap-1">${items.map(id => itemIcon(id, 26)).join('') || '<span class="text-3">无装备记录</span>'}</div>
+      <div class="flex gap-1">${spells.map(id => spellIcon(id, 26)).join('')}</div>
+      <div class="flex gap-1" id="replay-perks">${perks ? runeIcon(perks.keystone, 26) + styleIcon(perks.primary, 26) + styleIcon(perks.sub, 26) : '<span class="fs-11 text-3">符文待补全</span>'}</div>
+      ${me.level != null ? `<span class="badge gray">Lv${me.level}</span>` : ''}
+    </div>
+    ${skillSeq ? `<div class="fs-12 text-3 mt-2">技能加点：<b class="text-2">${esc(skillSeq)}</b></div>` : ''}
+    <div id="replay-gold" class="mt-2">${tl && (tl.teamGold || tl.goldSeries || []).length ? goldChartSVG(tl) : '<span class="fs-12 text-3">经济曲线加载中…</span>'}</div>
+    ${laneGoldTableHTML(r.participants || [], r.myTeamId, r.timeline)}
+  </div>`;
+}
+async function hydrateReplayTimeline(detail, r, gameId) {
+  const node = detail.querySelector('#replay-gold');
+  if (!node) return;
+  const tl = r.timeline || null;
+  const rich = tl && ((tl.teamGold || []).length > 1 || (tl.events || []).length > 0);
+  if (rich) { node.innerHTML = goldChartSVG(tl); return; }
+  // 旧缓存只有本人曲线/无曲线 → 联网补全团队曲线+节点+对位差+符文
+  let t = null;
+  try { t = await window.nexus.player.matchTimeline(gameId, puuid); } catch { t = null; }
+  if (t && t.ok && (t.teamGold || t.goldSeries || []).length) {
+    t.enemyFinal = laneGoldTable(t.participants || [], t.myTeamId).enTotal || null;
+    node.innerHTML = goldChartSVG(t);
+    const pk = detail.querySelector('#replay-perks');
+    if (pk && t.perks) pk.innerHTML = runeIcon(t.perks.keystone, 26) + styleIcon(t.perks.primary, 26) + styleIcon(t.perks.sub, 26);
+  } else if (tl && (tl.goldSeries || []).length) {
+    node.innerHTML = goldChartSVG(tl); // 离线回退：至少显示本人曲线
+  } else {
+    node.innerHTML = '<span class="fs-12 text-3">经济曲线：需已登录客户端且该对局有 DETAILS 帧数据；当前不可用（不伪造）。</span>';
+  }
+}
+
 async function openReplay(root, gameId) {
   const detail = root.querySelector('#replay-detail');
   detail.innerHTML = '<div class="panel"><div class="empty-state">' + icon('sync', 36) + '<div class="es-title">分析中…</div></div></div>';
@@ -126,11 +180,13 @@ async function openReplay(root, gameId) {
         ${r.team.laneGoldDiff != null ? `<span class="badge ${r.team.laneGoldDiff >= 0 ? 'green' : 'red'}">对位经济 ${r.team.laneGoldDiff >= 0 ? '+' : ''}${r.team.laneGoldDiff}</span>` : ''}
         <span class="fs-11 text-3">十人团队口径${r.team.note ? ' · ' + esc(r.team.note) : ''}</span>
       </div>` : ''}
+      ${replayVisualPanel(r)}
       ${taggedReport(r)}
       <div id="replay-kb"></div>
       ${aiBlock('replay-ai')}
     </div>`;
   drawKbTip(detail, r);
+  hydrateReplayTimeline(detail, r, gameId);
   const matchCharts = [];
   if (r.csPerMin != null) matchCharts.push({ label: '补刀/分', value: fx(r.csPerMin), pct: Math.min(100, r.csPerMin * 10) });
   if (r.goldPerMin != null) matchCharts.push({ label: '经济/分', value: Math.round(r.goldPerMin), pct: Math.min(100, r.goldPerMin / 8) });

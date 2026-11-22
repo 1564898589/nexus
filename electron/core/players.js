@@ -418,6 +418,21 @@ function createPlayerEngine(ctx) {
     };
   }
 
+  // 本人头像同步：客户端登录时把当前 profileIconId 写回缓存，离线也显示最近一次真实图标
+  async function syncSelfIcon() {
+    const s = lcu.getState();
+    if (!s.loggedIn) return { ok: false };
+    let sum = s.summoner;
+    if (!sum || sum.profileIconId == null) { try { sum = await lcu.getCurrentSummoner(); } catch { return { ok: false }; } }
+    if (!sum || !sum.puuid || sum.profileIconId == null) return { ok: false };
+    const row = db.get('SELECT profileIconId FROM players WHERE puuid=?', [sum.puuid]);
+    if (!row || row.profileIconId !== sum.profileIconId) {
+      db.run('UPDATE players SET profileIconId=? WHERE puuid=?', [sum.profileIconId, sum.puuid]);
+      db.persistSoon();
+    }
+    return { ok: true, puuid: sum.puuid, profileIconId: sum.profileIconId };
+  }
+
   // ---- full profile ----
   async function profile(puuid, { refresh = false, count = 20, serverId, modeKey } = {}) {
     let player = db.get('SELECT * FROM players WHERE puuid=?', [puuid]);
@@ -503,17 +518,96 @@ function createPlayerEngine(ctx) {
     const parts = g.participants || [];
     const mine = parts.find(p => p.puuid === puuid) || parts[0] || {};
     const pid = mine.participantId;
+    const myTeamId = mine.teamId;
+    const teamOf = {}; for (const p of parts) teamOf[p.participantId] = p.teamId;
+    // 对位对手：敌方同位置选手（用于对位经济差曲线）
+    const normPos = (x) => String(x || '').toUpperCase().replace('MIDDLE', 'MID').replace('BOTTOM', 'ADC').replace('UTILITY', 'SUPPORT');
+    const posOf = (p) => normPos(p.position || p.teamPosition || (p.timeline && p.timeline.lane));
+    const myPos = posOf(mine);
+    const laneOpp = parts.find(p => p.teamId !== myTeamId && posOf(p) === myPos) || null;
+    const oppPid = laneOpp ? laneOpp.participantId : null;
     const goldSeries = [];
+    const teamGold = [];
+    const laneDiff = [];
     const skillOrder = [];
+    const events = [];
+    let lastPfs = {};
     for (const f of frames) {
-      const pf = (f.participantFrames || {})[pid] || {};
       const t = Math.round((f.timestamp || 0) / 60000);
+      const pfs = f.participantFrames || {};
+      lastPfs = pfs;
+      const pf = pfs[pid] || {};
       if (pf.totalGold != null || pf.currentGold != null) goldSeries.push({ t, gold: pf.totalGold != null ? pf.totalGold : pf.currentGold });
+      let my = 0, en = 0, hasMy = false, hasEn = false;
+      for (const k of Object.keys(pfs)) {
+        const g = pfs[k].totalGold != null ? pfs[k].totalGold : pfs[k].currentGold;
+        if (g == null) continue;
+        if (teamOf[k] === myTeamId) { my += g; hasMy = true; } else { en += g; hasEn = true; }
+      }
+      if (hasMy || hasEn) teamGold.push({ t, my: hasMy ? my : null, enemy: hasEn ? en : null });
+      const mg = pfs[pid] ? (pfs[pid].totalGold != null ? pfs[pid].totalGold : pfs[pid].currentGold) : null;
+      const og = oppPid != null && pfs[oppPid] ? (pfs[oppPid].totalGold != null ? pfs[oppPid].totalGold : pfs[oppPid].currentGold) : null;
+      // 仅当双方都是真实数值时才记对位差，避免缺对位数据时把本人经济误算成「领先」
+      if (typeof mg === 'number' && typeof og === 'number') laneDiff.push({ t, diff: mg - og });
       for (const e of (f.events || [])) {
-        if (e.type === 'SKILL_LEVEL_UP' && (e.participantId === pid || e.creatorId === pid)) skillOrder.push({ t: Math.round((e.timestamp || 0) / 60000), slot: e.skillSlot, level: e.levelUpType });
+        const et = Math.round((e.timestamp || 0) / 60000);
+        if (e.type === 'SKILL_LEVEL_UP' && (e.participantId === pid || e.creatorId === pid)) skillOrder.push({ t: et, slot: e.skillSlot, level: e.levelUpType });
+        else if (e.type === 'ELITE_MONSTER_KILL') events.push({ t: et, kind: 'monster', monster: e.monsterType || '', team: e.teamId, mine: e.teamId === myTeamId });
+        else if (e.type === 'BUILDING_KILL') events.push({ t: et, kind: 'tower', building: e.buildingType || '', team: e.teamId, mine: e.teamId === myTeamId });
+        else if (e.type === 'CHAMPION_KILL') events.push({ t: et, kind: 'kill', killer: e.killerId, victim: e.victimId, mine: teamOf[e.killerId] === myTeamId });
       }
     }
-    return { ok: true, gameId, interval, goldSeries, skillOrder, participantId: pid, source: 'sgp-details' };
+    // 从 DETAILS 提取每人符文（基石/主系/副系），补全 LCU 缓存缺失的 perks
+    const sgpMod = require('../providers/sgp');
+    const perksByPid = {};
+    for (const p of parts) { const pk = sgpMod.extractPerks(p.perks); if (pk) perksByPid[p.participantId] = pk; }
+    const myPerks = perksByPid[pid] || null;
+    // 十人真实总经济（终局帧）+ 位置/队伍，供离线对位经济表使用（非伪造）
+    const fullParts = parts.map(p => {
+      const pf = lastPfs[p.participantId] || {};
+      const st = p.stats || {};
+      return {
+        puuid: p.puuid, participantId: p.participantId, name: p.riotIdGameName || p.summonerName || null,
+        championId: p.championId, teamId: p.teamId, position: posOf(p) || null,
+        gold: pf.totalGold != null ? pf.totalGold : (pf.currentGold != null ? pf.currentGold : null),
+        kills: st.kills ?? null, deaths: st.deaths ?? null, assists: st.assists ?? null,
+        cs: st.totalMinionsKilled != null ? st.totalMinionsKilled + (st.neutralMinionsKilled || 0) : null,
+        damage: st.totalDamageDealtToChampions ?? null, vision: st.visionScore ?? null,
+        perks: perksByPid[p.participantId] || null,
+      };
+    });
+    const result = { ok: true, gameId, interval, goldSeries, teamGold, laneDiff, events, skillOrder, perks: myPerks, participantId: pid, myTeamId, participants: fullParts, laneOpponent: laneOpp ? { name: laneOpp.riotIdGameName || laneOpp.summonerName, championId: laneOpp.championId } : null, source: 'sgp-details' };
+    // 缓存到对局记录：经济/团队/对位曲线+关键节点+符文+十人总经济（真实数据，非伪造），离线复盘/历史可用
+    try {
+      const row = db.get('SELECT data FROM matches WHERE gameId=?', [gameId]) || db.get('SELECT data FROM matches WHERE CAST(gameId AS TEXT)=?', [String(gameId)]);
+      if (row) {
+        const d = JSON.parse(row.data);
+        d.timeline = { interval, goldSeries, teamGold, laneDiff, events, skillOrder };
+        if (myPerks && d.me) d.me.perks = myPerks;
+        // 合并十人数据：保留旧缓存更富字段（装备/技能），补全 gold/位置/队伍/符文
+        const oldByPuuid = {}; for (const pp of (d.participants || [])) if (pp.puuid) oldByPuuid[pp.puuid] = pp;
+        d.participants = fullParts.map(fp => ({ ...(oldByPuuid[fp.puuid] || {}), ...fp, perks: fp.perks || (oldByPuuid[fp.puuid] && oldByPuuid[fp.puuid].perks) || null }));
+        db.run('UPDATE matches SET data=? WHERE gameId=?', [JSON.stringify(d), d.gameId != null ? d.gameId : gameId]);
+        db.persistSoon();
+      }
+    } catch {}
+    return result;
+  }
+
+  // 批量补全旧缓存：对缺少符文/团队曲线/关键节点的对局，联网拉 DETAILS 写回（限最近 N 场，需登录）。
+  async function backfillRecent(puuid, limit = 8) {
+    const s = lcu.getState();
+    if (!s.loggedIn) return { ok: false, upgraded: 0, reason: '需已登录客户端' };
+    const ms = cachedMatches(puuid, 60);
+    let upgraded = 0;
+    for (const m of ms.slice(0, 40)) {
+      if (upgraded >= limit) break;
+      const tl = m.timeline || {};
+      const hasRich = (tl.teamGold || []).length > 0 && (tl.events || []).length >= 0 && m.me && m.me.perks;
+      if (hasRich) continue;
+      try { const r = await matchTimeline(m.gameId, puuid); if (r && r.ok) upgraded++; } catch {}
+    }
+    return { ok: true, upgraded };
   }
 
   // 单局十人快速评级：仅读本地缓存（无网络），供对局详情表即时展示；深度侦察走 profile(refresh)。
@@ -556,7 +650,7 @@ function createPlayerEngine(ctx) {
   }
   function removeFocus(puuid) { db.run('DELETE FROM player_focus WHERE puuid=?', [puuid]); db.persist(); }
 
-  return { available, channels, self, search, confirmCandidate, searchHistory, deleteSearchHistory, clearSearchHistory, profile, fetchHistory, getMatchDetail, matchTimeline, computeStats, rate, cachedMatches, scoutParticipants, resolveCell, recentPlayers, deleteRecent, clearRecent, favoritePlayers, toggleFavorite, focusList, setFocus, removeFocus, defaultRatingMode, modeLabel, RANK_CN, RANK_ORDER };
+  return { available, channels, self, syncSelfIcon, search, confirmCandidate, searchHistory, deleteSearchHistory, clearSearchHistory, profile, fetchHistory, getMatchDetail, matchTimeline, backfillRecent, computeStats, rate, cachedMatches, scoutParticipants, resolveCell, recentPlayers, deleteRecent, clearRecent, favoritePlayers, toggleFavorite, focusList, setFocus, removeFocus, defaultRatingMode, modeLabel, RANK_CN, RANK_ORDER };
 }
 
 module.exports = { createPlayerEngine, RANK_CN, RANK_ORDER };

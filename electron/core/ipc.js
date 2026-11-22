@@ -83,6 +83,20 @@ function registerIpc(ctx) {
       try { await require('../providers/collector').refreshDetail(ctx, key, position, { region: 'kr', tierFilter: f.tierFilter }); } catch (e) { log.warn('kr detail refresh failed', { key, position, error: String(e.message || e) }); }
       b = Q.getBuild(db, config, key, position, o);
     }
+    // 加点顺序全覆盖：主来源（韩服）缺加点时回退国服 101 官方 skill_point（真实官方数据，非臆造），标明来源
+    if (b && b.data && !(b.data.skillOrder && b.data.skillOrder.length) && (o.region || f.region) !== 'cn') {
+      try {
+        let cnB = Q.getBuild(db, config, key, position, { region: 'cn' });
+        if (!cnB || !(cnB.data && cnB.data.skillOrder && cnB.data.skillOrder.length)) {
+          await require('../providers/cn101').championDetail(ctx, key, position, {});
+          cnB = Q.getBuild(db, config, key, position, { region: 'cn' });
+        }
+        if (cnB && cnB.data && cnB.data.skillOrder && cnB.data.skillOrder.length) {
+          b.data.skillOrder = cnB.data.skillOrder;
+          b.data.skillOrderSource = 'cn101-official';
+        }
+      } catch (e) { log.warn('skillOrder cn fallback failed', { key, position, error: String(e.message || e) }); }
+    }
     return b;
   });
   handle('data:counters', (key, position) => Q.countersFor(db, config, key, position));
@@ -200,6 +214,33 @@ function registerIpc(ctx) {
       if (!counterStat) { counterStat = find(myKey, enemyKey); perspective = 'mine'; }
     }
     return { my, enemy, region: f.region, perspective: counterStat ? perspective : null, fromMatchup, ...tactics.explainCounter(my, enemy, counterStat, { perspective, region: f.region }) };
+  });
+  // 机制级对线指南：换血/兵线/防Gank/取胜路径，冠军专属（启发式，非官方统计）
+  handle('analysis:laneGuide', (myKey, enemyKey, position) => {
+    const map = cmap();
+    const my = map[myKey], enemy = map[enemyKey];
+    if (!my || !enemy) return { __error: '英雄数据缺失，请先更新英雄列表' };
+    const f = Q.currentFilter(db, config);
+    const patch = Q.latestPatchFor(db, f.region, f.tierFilter);
+    let counterStat = null, perspective = 'mine';
+    if (patch) {
+      const m = db.get('SELECT * FROM matchups WHERE championKey=? AND position=? AND region=? AND tierFilter=? AND patch=? AND opponentKey=?', [myKey, position, f.region, f.tierFilter, patch, enemyKey]);
+      if (m && m.winRate != null) { counterStat = { play: m.play, win: m.win, winRate: m.winRate }; }
+    }
+    if (!counterStat) {
+      const row = db.get('SELECT * FROM champion_stats WHERE championKey=? AND position=? AND region=? AND tierFilter=?', [enemyKey, position, f.region, f.tierFilter]);
+      const cs = row ? Q.parseJson(row.counters, []).find(c => c.championKey === myKey) : null;
+      if (cs && cs.winRate != null) { counterStat = cs; perspective = 'enemy'; }
+    }
+    return { my, enemy, ...tactics.laneGuide(my, enemy, position, counterStat, { perspective }) };
+  });
+  // 打野刷野路线：冠军自适应营序 + 首抓时机 + 对位敌方打野入侵风险 + 资源优先级
+  handle('analysis:jungleRoute', (myKey, enemyJunglerKey) => {
+    const map = cmap();
+    const my = map[myKey];
+    if (!my) return { __error: '英雄数据缺失，请先更新英雄列表' };
+    const enemy = enemyJunglerKey ? map[enemyJunglerKey] : null;
+    return { my, enemyJungler: enemy || null, ...tactics.jungleRoute(my, enemy) };
   });
   handle('analysis:build', (key, position) => {
     const map = cmap();
@@ -328,9 +369,15 @@ function registerIpc(ctx) {
     gameId: m.gameId, gameCreation: m.gameCreation, duration: m.duration, mode: m.mode, queueId: m.queueId,
     win: m.me ? m.me.win : null, championId: m.me ? m.me.championId : null, position: m.me ? m.me.position : null,
     kills: m.me ? m.me.kills : null, deaths: m.me ? m.me.deaths : null, assists: m.me ? m.me.assists : null, source: m.source,
+    // OP.GG 式历史行所需真实字段（装备/技能/符文/经济/伤害/视野/等级/补刀）
+    cs: m.me ? m.me.cs : null, gold: m.me ? m.me.gold : null, damage: m.me ? m.me.damage : null, vision: m.me ? m.me.vision : null,
+    level: m.me ? m.me.level : null, items: m.me ? (m.me.items || []) : [], spells: m.me ? (m.me.spells || []) : [], perks: m.me ? (m.me.perks || null) : null,
+    timeline: m.timeline || null,
   })));
   // 实验性只读探测：SGP DETAILS（perks/加点/timeline 可用性），失败诚实返回 error
   handle('player:matchTimeline', (gameId, puuid) => players.matchTimeline(gameId, puuid));
+  handle('player:backfillRecent', (puuid, limit) => players.backfillRecent(puuid, limit));
+  handle('player:syncSelfIcon', () => players.syncSelfIcon());
   handle('player:matchDetailsProbe', async (gameId) => {
     try {
       const s = lcu.getState();
@@ -356,7 +403,7 @@ function registerIpc(ctx) {
     for (const r of rows) {
       const m = Q.parseJson(r.data, null);
       if (m && Array.isArray(m.participants) && m.participants.length >= 2) {
-        return { source: m.source || 'cache', gameCreation: m.gameCreation, duration: m.duration, mode: m.mode, queueId: m.queueId, participants: m.participants };
+        return { source: m.source || 'cache', gameCreation: m.gameCreation, duration: m.duration, mode: m.mode, queueId: m.queueId, participants: m.participants, timeline: m.timeline || null, mePerks: (m.me && m.me.perks) || null };
       }
     }
     return null;
@@ -370,7 +417,10 @@ function registerIpc(ctx) {
     const cat = replayAnalytics.modeCategory(m.queueId, m.mode);
     const sameMode = matches.filter(x => replayAnalytics.modeCategory(x.queueId, x.mode).key === cat.key);
     const stats = players.computeStats(sameMode, puuid);
-    return replayAnalytics.analyzeMatch(m, stats, cat.label);
+    const base = replayAnalytics.analyzeMatch(m, stats, cat.label);
+    // 图文并茂：附带本人真实装备/技能/符文/等级 + 缓存经济曲线/加点 + 十人经济（离线对位对比）
+    const myTeamId = m.me ? m.me.teamId : null;
+    return { ...base, me: m.me || null, timeline: m.timeline || null, participants: m.participants || [], myTeamId };
   });
   handle('growth:report', (puuid, modeKey) => {
     const all = players.cachedMatches(puuid, 200);

@@ -1,6 +1,6 @@
 // 版本更新 — enterprise dual-channel update center (GitHub authoritative + Quark mirror + local).
 import { icon } from '../icons.js';
-import { esc, fmtTime, toast, confirmDialog, sourceTag } from '../util.js';
+import { esc, fmtTime, toast, confirmDialog, sourceTag, fx } from '../util.js';
 import { store } from '../store.js';
 
 const LEVEL = { major: ['大版本 MAJOR', 'red'], minor: ['中版本 MINOR', 'gold'], patch: ['小版本 PATCH', 'teal'] };
@@ -54,7 +54,7 @@ function draw(root) {
   const gh = cs.github || {};
   const ghs = GH_STATE[gh.state] || GH_STATE.unknown;
   const activeName = { github: 'GitHub', quark: '夸克镜像（人工）', local: '本地发布目录', 'local-file': '本地文件（人工选择）' }[st.channel] || '—';
-  const speed = st.speedKBs ? (st.speedKBs >= 1024 ? (st.speedKBs / 1024).toFixed(1) + ' MB/s' : st.speedKBs + ' KB/s') : '';
+  const speed = st.speedKBs ? (st.speedKBs >= 1024 ? fx(st.speedKBs / 1024, 1) + ' MB/s' : Math.round(st.speedKBs) + ' KB/s') : '';
 
   body.innerHTML = `
     <div class="flex gap-3 mb-4" style="flex-wrap:wrap">
@@ -79,7 +79,7 @@ function draw(root) {
           </div>
           ${m && m.title ? `<div class="fw-6 fs-15 mb-2 text-gold">${esc(m.title)}</div>` : ''}
           <div class="flex items-center gap-2 mb-2"><span class="lcu-dot ${st.available ? 'warn' : st.error ? '' : 'on'}"></span><span class="fs-13 fw-6">${esc(STAGE_TEXT[st.stage] || st.stage)}</span>${speed ? `<span class="badge teal">${speed}</span>` : ''}${st.resumed && st.stage === 'downloading' ? '<span class="badge gold">断点续传</span>' : ''}</div>
-          ${busy || st.stage === 'verified' ? `<div class="bar-track mb-2"><div class="bar-fill gold" style="width:${st.percent || 0}%"></div></div><div class="fs-12 text-3 mb-2">${st.total ? (st.bytes / 1048576).toFixed(1) + ' / ' + (st.total / 1048576).toFixed(1) + ' MB · ' : ''}${st.percent || 0}%</div>` : ''}
+          ${busy || st.stage === 'verified' ? `<div class="bar-track mb-2"><div class="bar-fill gold" style="width:${st.percent || 0}%"></div></div><div class="fs-12 text-3 mb-2">${st.total ? fx(st.bytes / 1048576, 1) + ' / ' + fx(st.total / 1048576, 1) + ' MB · ' : ''}${Math.round(st.percent || 0)}%</div>` : ''}
           ${st.error ? `<div class="badge red mb-2" style="white-space:normal;line-height:1.7;display:block">${esc(st.error)}</div>` : ''}
           ${st.stage === 'mirror-manual' && st.mirror ? `<div class="panel tight mb-3" style="border-color:var(--gold)">
             <div class="fw-6 fs-13 text-gold mb-2">夸克镜像下载指引</div>

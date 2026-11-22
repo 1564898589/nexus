@@ -59,17 +59,20 @@ function req(method, url, tok, body, contentType) {
     [['added', '【新增功能】'], ['improved', '【功能优化】'], ['fixed', '【问题修复】'], ['stability', '【性能与稳定性】'], ['compatibility', '【兼容性说明】']]
       .filter(([k]) => manifest.notes[k] && manifest.notes[k].length)
       .map(([k, l]) => l + '\n' + manifest.notes[k].map(t => '- ' + t).join('\n')).join('\n\n') +
-    `\n\n---\nSHA-256: \`${manifest.sha256}\`\n数字签名：Authenticode · 发布者指纹 \`${manifest.publisherThumbprint}\`\n国内镜像：夸克网盘（见应用内「版本更新」渠道配置）\n开发者：竖 · 邮箱：1564898589@qq.com`;
+    `\n\n---\nSHA-256: ${manifest.sha256}\n数字签名：Authenticode · 发布者指纹 ${manifest.publisherThumbprint}\n国内镜像：夸克网盘（见应用内「版本更新」渠道配置）\n开发者：竖 · 邮箱：1564898589[at]qq.com`;
 
   const api = 'https://api.github.com/repos/' + repo;
   let rel;
   try { rel = await req('GET', api + '/releases/tags/' + tag, tok); console.log('已存在同 tag Release，将更新资产与说明。'); }
-  catch { rel = await req('POST', api + '/releases', tok, { tag_name: tag, name: manifest.title, body: notesMd, prerelease: PRERELEASE, draft: false }); console.log('已创建 Release ' + tag); }
+  catch { rel = await req('POST', api + '/releases', tok, { tag_name: tag, name: manifest.title, prerelease: PRERELEASE, draft: false }); console.log('已创建 Release ' + tag); }
+  // 正文单独 PATCH：GitHub 创建接口带 body 会触发 links schema 422，且邮箱需防自动链接
   await req('PATCH', api + '/releases/' + rel.id, tok, { name: manifest.title, body: notesMd, prerelease: PRERELEASE });
 
+  // GitHub 资产名空格→点；清单 file 同步归一，确保旧版精确匹配客户端也能解析下载地址
+  const ghManifest = { ...manifest, file: manifest.file.replace(/\s+/g, '.') };
   const uploads = [
     [manifest.file, fs.readFileSync(installer), 'application/octet-stream'],
-    ['nexus-update.json', Buffer.from(JSON.stringify(manifest, null, 2)), 'application/json'],
+    ['nexus-update.json', Buffer.from(JSON.stringify(ghManifest, null, 2)), 'application/json'],
     [manifest.file + '.sha256', Buffer.from(manifest.sha256 + '  ' + manifest.file + '\n'), 'text/plain'],
   ];
   for (const [name, buf, ct] of uploads) {

@@ -2,7 +2,7 @@
 // Structured JSON reports (preferred) + safe Markdown fallback + rule fallback.
 // Shared spec, per-module layout variants. Charts only from real local data.
 import { icon } from './icons.js';
-import { esc, fmtTime, toast, modal, confirmDialog, pct } from './util.js';
+import { esc, fmtTime, toast, modal, confirmDialog, pct, fx } from './util.js';
 import { sparkline, hbar, gauge, radar } from './charts.js';
 import { renderMarkdown } from './markdown.js';
 
@@ -270,12 +270,12 @@ function chartsHtml(c) {
     const wr = c.winSeries.filter(Boolean).length / c.winSeries.length;
     box(`胜负走势（旧 → 新 · ${c.winSeries.length} 场）`, `<div class="flex gap-1" style="flex-wrap:wrap">${c.winSeries.map(w => `<span class="rp-wl" style="background:${w ? 'var(--green)' : 'var(--red)'}" title="${w ? '胜' : '负'}"></span>`).join('')}</div><div class="fs-12 text-3 mt-1">区间胜率 ${pct(wr)}</div>`);
   }
-  if (c.kdaSeries && c.kdaSeries.length >= 2) box('KDA 走势', sparkline(c.kdaSeries, { width: 300, height: 56, color: '#C8AA6E' }), `最低 ${Math.min(...c.kdaSeries).toFixed(1)} · 最高 ${Math.max(...c.kdaSeries).toFixed(1)}`);
+  if (c.kdaSeries && c.kdaSeries.length >= 2) box('KDA 走势', sparkline(c.kdaSeries, { width: 300, height: 56, color: '#C8AA6E' }), `最低 ${fx(Math.min(...c.kdaSeries), 2)} · 最高 ${fx(Math.max(...c.kdaSeries), 2)}`);
   if (c.recent) {
     let inner = hbar('近期胜率 ' + pct(c.recent.winRate), c.recent.winRate * 100, 100, { color: 'var(--teal)', suffix: '%' });
     if (c.older) inner += hbar('此前胜率 ' + pct(c.older.winRate), c.older.winRate * 100, 100, { color: 'var(--blue)', suffix: '%' });
-    inner += hbar('近期 KDA ' + c.recent.kda.toFixed(2), Math.min(100, c.recent.kda * 15), 100, { color: 'var(--gold)' });
-    if (c.older) inner += hbar('此前 KDA ' + c.older.kda.toFixed(2), Math.min(100, c.older.kda * 15), 100, { color: 'var(--purple)' });
+    inner += hbar('近期 KDA ' + fx(c.recent.kda, 2), Math.min(100, c.recent.kda * 15), 100, { color: 'var(--gold)' });
+    if (c.older) inner += hbar('此前 KDA ' + fx(c.older.kda, 2), Math.min(100, c.older.kda * 15), 100, { color: 'var(--purple)' });
     box('近期 vs 此前', inner, `近期 ${c.recent.games} 场${c.older ? ' · 此前 ' + c.older.games + ' 场' : ''} · KDA 条为示意刻度（×15）`);
   }
   if (c.match && c.match.length) {

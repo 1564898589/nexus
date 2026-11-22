@@ -162,7 +162,17 @@ function getBuild(db, config, key, position, opts = {}) {
   let data = parseJson(row.data, null);
   // 国服缓存为 101 原始串 → 读时归一为通用形状（旧缓存无需重抓）
   if (region === 'cn' && data && data.build && !data.coreItems) data = require('../providers/cn101').normalize(data, db);
-  return { championKey: key, position, region, tierFilter, patch: row.patch, source: row.source, fetchedAt: row.fetchedAt, data: resolveBuild(db, data) };
+  const resolved = resolveBuild(db, data);
+  // 加点顺序全覆盖：主来源缺加点时回退已缓存的国服 101 官方 skill_point（真实官方，离线可用），标明来源
+  if (resolved && !(resolved.skillOrder && resolved.skillOrder.length) && region !== 'cn') {
+    const cnRow = db.get('SELECT * FROM builds WHERE championKey=? AND position=? AND region=? ORDER BY patch DESC LIMIT 1', [key, position, 'cn']);
+    if (cnRow) {
+      let cnData = parseJson(cnRow.data, null);
+      if (cnData && cnData.build && !cnData.coreItems) cnData = require('../providers/cn101').normalize(cnData, db);
+      if (cnData && cnData.skillOrder && cnData.skillOrder.length) { resolved.skillOrder = cnData.skillOrder; resolved.skillOrderSource = 'cn101-official'; }
+    }
+  }
+  return { championKey: key, position, region, tierFilter, patch: row.patch, source: row.source, fetchedAt: row.fetchedAt, data: resolved };
 }
 
 function getChampion(db, config, key) {

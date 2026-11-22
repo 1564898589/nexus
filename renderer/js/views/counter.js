@@ -3,6 +3,7 @@ import { icon } from '../icons.js';
 import { el, esc, pct, fx, asset, POS_CN, POSITIONS, sourceTag, toast, champImg, modal, fmtTime, TIER_FILTERS, TIER_FILTERS_CN } from '../util.js';
 import { store, navigate, getChamp, loadChampions } from '../store.js';
 import { openChampPicker } from '../picker.js';
+import { laneGuideHTML, jungleRouteHTML } from './intel-common.js';
 
 let myKey = null, enemyKey = null, pos = 'MID';
 let currentMatchup = null;
@@ -234,6 +235,25 @@ async function query(root) {
       <div><div class="section-title" style="font-size:13px">机制解读</div>${(res.reason || []).map(r => `<div class="flex gap-2 mb-2">${icon('spark', 14, 'text-teal')}<span class="fs-13 text-2" style="line-height:1.7">${esc(r)}</span></div>`).join('')}<div class="mt-2">${sourceTag('heuristic')}</div></div>
     </div>
     <div class="divider"></div><div class="fs-12 text-3">${esc(res.note || '')}</div>
+    <div id="counter-guide" class="mt-3"></div>
   </div>`;
   const sw = out.querySelector('#cq-swap'); if (sw) sw.addEventListener('click', () => swap(root));
+  // 机制级对线指南（+打野位刷野路线）：冠军专属，启发式，独立异步加载不阻塞主面板
+  (async () => {
+    const node = out.querySelector('#counter-guide');
+    if (!node) return;
+    node.innerHTML = '<div class="fs-12 text-3">生成对线指南…</div>';
+    let html = '';
+    try {
+      const g = await window.nexus.analysis.laneGuide(myKey, enemyKey, pos);
+      if (g && !g.__error) html += laneGuideHTML(g);
+    } catch {}
+    if (pos === 'JUNGLE') {
+      try {
+        const r = await window.nexus.analysis.jungleRoute(myKey, enemyKey);
+        if (r && !r.__error) html += jungleRouteHTML(r);
+      } catch {}
+    }
+    node.innerHTML = html || '<div class="fs-12 text-3">对线指南不可用（英雄数据缺失）。</div>';
+  })();
 }

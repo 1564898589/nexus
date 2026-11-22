@@ -48,6 +48,7 @@ export async function render(root) {
         <span class="fs-12 text-3" id="bp-count"></span>
       </div>
     </div>
+    <div id="bp-live" class="mb-4"></div>
     <div class="bp-board mb-4">
       <div class="bp-side blue">
         <div class="bp-side-title">蓝色方 BLUE</div>
@@ -71,9 +72,38 @@ export async function render(root) {
   root.querySelector('#bp-save').addEventListener('click', () => saveBp(root));
   root.querySelector('#bp-load').addEventListener('click', () => loadBp(root));
   root.querySelector('#bp-prep').addEventListener('click', () => toPrep(root));
+  renderLiveBanner(root);
   drawBoard(root);
   analyze(root);
   return {};
+}
+
+// 实时选人联动：检测到客户端选人阵容时提供「载入到棋盘」，把真实 draft（含 ban）灌入 BP 模拟器
+function renderLiveBanner(root) {
+  const node = root.querySelector('#bp-live');
+  if (!node) return;
+  const b = store.bpBoard;
+  if (!b || !b.fromLive || (!(b.myPicks || []).length && !(b.enemyPicks || []).length)) { node.innerHTML = ''; return; }
+  const en = (b.enemyPicks || []).length, my = (b.myPicks || []).length;
+  const banN = ((b.liveBans && b.liveBans.my) || []).length + ((b.liveBans && b.liveBans.enemy) || []).length;
+  node.innerHTML = `<div class="panel tight" style="border-color:var(--teal)">
+    <div class="flex items-center gap-2" style="flex-wrap:wrap">
+      ${icon('lcu', 16, 'text-teal')}
+      <span class="fs-13 fw-6">检测到实时选人阵容</span>
+      <span class="fs-12 text-3">我方 ${my} 人 · 敌方 ${en} 人 · ban ${banN} 个（客户端只读）</span>
+      <button class="btn primary sm" id="bp-load-live" style="margin-left:auto">${icon('download', 14)} 载入到棋盘</button>
+    </div>
+  </div>`;
+  node.querySelector('#bp-load-live').addEventListener('click', () => {
+    snapshot();
+    bp = freshBp();
+    (b.myPicks || []).slice(0, 5).forEach((p, i) => { if (p && p.key) bp.blue[i] = { key: p.key }; });
+    (b.enemyPicks || []).slice(0, 5).forEach((p, i) => { if (p && p.key) bp.red[i] = { key: p.key }; });
+    ((b.liveBans && b.liveBans.my) || []).slice(0, 5).forEach((k, i) => { bp.blueBans[i] = k; });
+    ((b.liveBans && b.liveBans.enemy) || []).slice(0, 5).forEach((k, i) => { bp.redBans[i] = k; });
+    drawBoard(root); analyze(root);
+    toast('已载入实时选人阵容（我方蓝/敌方红），可继续手动调整', 'success', 2600);
+  });
 }
 
 function flashSlot(root, side, type, i) {

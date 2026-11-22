@@ -115,7 +115,9 @@ function createChannels({ config, logger, paths }) {
     if (!asset) throw new Error('GitHub Release 缺少 nexus-update.json 清单资产');
     const m = await httpJson(asset.browser_download_url || asset.url, { Accept: 'application/octet-stream' });
     if (m.product !== 'NEXUS') throw new Error('清单产品标识不符');
-    m._github = { tag: rel.tag_name, publishedAt: rel.published_at, prerelease: !!rel.prerelease, htmlUrl: rel.html_url, assetUrl: ((rel.assets || []).find(a => a.name === m.file) || {}).browser_download_url || null };
+    // GitHub 会把资产名中的空格规范化为点（NEXUS Setup x.exe → NEXUS.Setup.x.exe），匹配时两侧统一归一
+    const normName = (x) => String(x || '').replace(/\s+/g, '.');
+    m._github = { tag: rel.tag_name, publishedAt: rel.published_at, prerelease: !!rel.prerelease, htmlUrl: rel.html_url, assetUrl: ((rel.assets || []).find(a => normName(a.name) === normName(m.file)) || {}).browser_download_url || null };
     return m;
   }
 

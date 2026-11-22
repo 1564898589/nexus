@@ -3,7 +3,7 @@
 import { icon } from '../icons.js';
 import { el, esc, pct, fx, num, asset, fmtTime, timeAgo, sourceTag, toast, modal, confirmDialog, POS_CN } from '../util.js';
 import { store, navigate } from '../store.js';
-import { aiBlock, bindAi, modeFilterRow, inMode, modeCat } from './intel-common.js';
+import { aiBlock, bindAi, modeFilterRow, inMode, modeCat, ensureIconMaps, itemIcon, spellIcon, styleIcon, goldChartSVG, laneGoldTableHTML, laneGoldTable } from './intel-common.js';
 
 const RANK_CN = { IRON: '黑铁', BRONZE: '青铜', SILVER: '白银', GOLD: '黄金', PLATINUM: '铂金', EMERALD: '翡翠', DIAMOND: '钻石', MASTER: '大师', GRANDMASTER: '宗师', CHALLENGER: '王者' };
 const GRADE_COLOR = { S: 'var(--t1)', A: 'var(--teal)', B: 'var(--blue)', C: 'var(--purple)', D: 'var(--red)' };
@@ -14,6 +14,7 @@ const KIND_CN = {
   'riot-id-required': ['需昵称#标签', 'amber'],
 };
 let curPuuid = null, matchCount = 20, regionMap = {};
+let _iconsReady = false;
 
 function champBy(id) { return store.champions.find(c => c.id === id) || null; }
 function gradeBadge(rating, lg = false) {
@@ -341,6 +342,8 @@ let rateModeOverride = null; // null=自动(竞技优先)；否则为用户选�
 async function drawProfile(root, puuid, refresh) {
   const main = root.querySelector('#player-main');
   main.innerHTML = loadingPanel(refresh ? '正在刷新真实战绩…' : '正在读取本地缓存…');
+  // 登录时先同步本人图标到缓存，保证头像与游戏一致（离线则用最近同步值）
+  try { await window.nexus.player.syncSelfIcon(); } catch {}
   let prof;
   try { prof = await window.nexus.player.profile(puuid, { refresh, count: matchCount, modeKey: rateModeOverride || undefined }); }
   catch (e) { main.innerHTML = `<div class="panel"><div class="empty-state">${icon('warn', 44)}<div class="es-title">加载失败</div><div>${esc(String(e.message || e))}</div><button class="btn primary sm mt-3" id="p-retry">重试</button></div></div>`; main.querySelector('#p-retry').addEventListener('click', () => drawProfile(root, puuid, refresh)); return; }
@@ -587,6 +590,7 @@ function bindMatchFilters(main, matches, puuid, serverId) {
 
 function drawMatches(wrap, matches, puuid, serverId) {
   if (!matches.length) { wrap.innerHTML = `<div class="empty-state">${icon('clock', 40)}<div class="es-title">暂无战绩</div><div>点「刷新」从真实数据源获取；私密战绩或无记录时显示为空。未连接任何通道时不会显示伪造战绩。</div></div>`; return; }
+  if (!_iconsReady) ensureIconMaps().then(() => { _iconsReady = true; if (wrap.isConnected) drawMatches(wrap, matches, puuid, serverId); });
   wrap.innerHTML = matches.map(m => {
     const me = m.me || {}; const ch = champBy(me.championId);
     const win = me.win === true;
@@ -595,7 +599,12 @@ function drawMatches(wrap, matches, puuid, serverId) {
       ${ch ? `<img src="${asset(ch.imageUrl)}" style="width:42px;height:42px;border-radius:var(--r-md)"/>` : '<div class="item-icon"></div>'}
       <div style="width:70px"><div class="fw-6 ${win ? 'text-green' : 'text-red'}">${win ? '胜利' : me.win === false ? '失败' : '未知'}</div><div class="fs-12 text-3">${esc(modeCat(m.queueId, m.mode).label)}</div></div>
       <div style="width:90px"><div class="num fw-6">${me.kills ?? '—'} / ${me.deaths ?? '—'} / ${me.assists ?? '—'}</div><div class="fs-12 text-3">KDA ${kda}</div></div>
-      <div style="flex:1" class="fs-12 text-3">${me.cs != null ? me.cs + ' 补刀' : ''} ${me.gold != null ? '· ' + num(me.gold) + ' 金' : ''} ${m.duration ? '· ' + Math.round(m.duration / 60) + ' 分钟' : ''} ${m.source === 'sgp' ? '· SGP' : ''}</div>
+      <div class="flex-col gap-1" style="flex-shrink:0">
+        <div class="flex gap-1">${(me.spells || []).slice(0, 2).map(id => spellIcon(id, 18)).join('')}</div>
+        <div class="flex gap-1">${me.perks ? styleIcon(me.perks.primary, 18) + styleIcon(me.perks.sub, 18) : ''}</div>
+      </div>
+      <div class="flex gap-1" style="flex-shrink:0;flex-wrap:wrap;max-width:132px">${(me.items || []).slice(0, 6).map(id => itemIcon(id, 20)).join('')}</div>
+      <div style="flex:1" class="fs-12 text-3">${me.cs != null ? me.cs + ' 补刀' : ''} ${me.gold != null ? '· ' + num(me.gold) + ' 金' : ''} ${me.damage != null ? '· ' + num(me.damage) + ' 伤' : ''} ${m.duration ? '· ' + Math.round(m.duration / 60) + ' 分钟' : ''} ${m.source === 'sgp' ? '· SGP' : ''}</div>
       <div class="fs-12 text-3">${m.gameCreation ? timeAgo(new Date(m.gameCreation).toISOString()) : ''}</div>
       ${icon('chevron', 14, 'text-3')}
     </div>`;
@@ -722,22 +731,25 @@ async function openMatch(gameId, puuid, serverId) {
   (async () => {
     const tl = body.querySelector('#match-timeline');
     if (!tl) return;
-    tl.innerHTML = `<div class="panel tight"><div class="fs-12 text-3">读取经济曲线/加点（需已登录客户端）…</div></div>`;
-    let t = null;
-    try { t = await window.nexus.player.matchTimeline(gameId, puuid); } catch { t = null; }
-    if (!t || !t.ok || !t.goldSeries || !t.goldSeries.length) {
-      tl.innerHTML = `<div class="panel tight"><div class="fs-12 text-3">经济曲线/技能加点：${esc((t && t.error) || '当前不可用（需已登录客户端且该对局有 DETAILS 帧数据）')}。装备/召唤师技能见上表（真实缓存）。</div></div>`;
-      return;
+    // 优先用已缓存的富曲线（离线可见）；否则联网拉 DETAILS 补全
+    const cachedTl = (cachedFallback && cachedFallback.timeline) || null;
+    const cachedRich = cachedTl && ((cachedTl.teamGold || []).length > 1 || (cachedTl.events || []).length > 0);
+    let t = cachedRich ? { ok: true, ...cachedTl } : null;
+    if (!t) {
+      tl.innerHTML = `<div class="panel tight"><div class="fs-12 text-3">读取经济曲线/加点…</div></div>`;
+      try { t = await window.nexus.player.matchTimeline(gameId, puuid); } catch { t = null; }
     }
-    const gs = t.goldSeries;
-    const maxG = Math.max(...gs.map(x => x.gold), 1);
-    const W = 560, H = 120, pad = 8;
-    const pts = gs.map((x, i) => `${pad + (i / Math.max(1, gs.length - 1)) * (W - pad * 2)},${H - pad - (x.gold / maxG) * (H - pad * 2)}`).join(' ');
+    if (!t || !t.ok || !(t.goldSeries || []).length) {
+      if (cachedTl && (cachedTl.goldSeries || []).length) t = { ok: true, ...cachedTl };
+      else { tl.innerHTML = `<div class="panel tight"><div class="fs-12 text-3">经济曲线/技能加点：${esc((t && t.error) || '当前不可用（需已登录客户端且该对局有 DETAILS 帧数据）')}。装备/召唤师技能见上表（真实缓存）。</div></div>`; return; }
+    }
     const skillSeq = (t.skillOrder || []).map(e => ['Q', 'W', 'E', 'R'][(e.slot || 1) - 1] || '?').join(' ');
+    t.enemyFinal = laneGoldTable(parts, myTeam).enTotal || null;
     tl.innerHTML = `<div class="panel tight">
-      <div class="fs-12 fw-6 mb-2">经济曲线（本人 · 真实 SGP DETAILS） <span class="badge gray">峰值 ${num(maxG)}</span></div>
-      <svg viewBox="0 0 ${W} ${H}" style="width:100%;height:120px"><polyline points="${pts}" fill="none" stroke="var(--gold)" stroke-width="2"/></svg>
+      <div class="fs-12 fw-6 mb-2">经济曲线 · 团队对比 · 关键节点 <span class="badge gray">真实 SGP DETAILS</span></div>
+      ${goldChartSVG(t)}
       ${skillSeq ? `<div class="fs-12 text-3 mt-2">技能加点顺序（真实事件）：<b class="text-2">${esc(skillSeq)}</b></div>` : '<div class="fs-12 text-3 mt-2">技能加点：该对局无 SKILL_LEVEL_UP 事件，不臆造。</div>'}
+      ${laneGoldTableHTML(parts, myTeam, t)}
     </div>`;
   })();
   body.querySelectorAll('.scout-row').forEach(n => n.addEventListener('click', () => { const p = parts.find(x => (x.puuid || '') === n.dataset.puuid); if (p) openScout(p, ctx); }));

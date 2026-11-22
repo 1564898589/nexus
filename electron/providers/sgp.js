@@ -173,9 +173,22 @@ function normalizeParticipant(p) {
     vision: s.visionScore ?? null,
     items: [s.item0, s.item1, s.item2, s.item3, s.item4, s.item5].filter(x => x != null && x > 0),
     spells: [p.spell1Id, p.spell2Id].filter(x => x != null),
-    perks: p.perks ? { primary: p.perks.styles && p.perks.styles[0] && p.perks.styles[0].style, sub: p.perks.styles && p.perks.styles[1] && p.perks.styles[1].style } : null,
+    perks: extractPerks(p.perks),
     level: s.champLevel ?? null,
   };
 }
+// 符文提取：主系/副系/基石/属性碎片，供历史行与复盘可视化
+function extractPerks(perks) {
+  if (!perks || !perks.styles) return null;
+  const st0 = perks.styles[0] || {}, st1 = perks.styles[1] || {};
+  return {
+    primary: st0.style != null ? st0.style : null,
+    sub: st1.style != null ? st1.style : null,
+    keystone: st0.selections && st0.selections[0] ? st0.selections[0].perk : null,
+    primaryRunes: (st0.selections || []).map(x => x.perk).filter(Boolean),
+    subRunes: (st1.selections || []).map(x => x.perk).filter(Boolean),
+    statPerks: perks.statPerks || null,
+  };
+}
 
-module.exports = { TENCENT_REGIONS, RIOT_REGIONS, regionById, subIdFor, candidateHosts, getMatchHistory, getGameSummary, getGameDetails, normalizeGame, normalizeParticipant };
+module.exports = { TENCENT_REGIONS, RIOT_REGIONS, regionById, subIdFor, candidateHosts, getMatchHistory, getGameSummary, getGameDetails, normalizeGame, normalizeParticipant, extractPerks };
